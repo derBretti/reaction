@@ -4,17 +4,17 @@
   "translation": {
     "reaction-checkout": {
       "cartDrawerItems": {
-        "limitedSupply": "Begrenzte Versorgung"
+        "limitedSupply": "Begrenzte Verfügbarkeit"
       },
       "cartCompleted": {
         "yourCart": "Ihr Warenkorb",
         "discountTotal": "Rabatt Gesamt",
-        "orderTotal": "Bestellen Gesamt",
+        "orderTotal": "Gesamt",
         "fulfilledBy": "Erfüllt durch",
         "quantityTotal": "Menge Gesamt",
         "orderSubtotal": "Zwischensumme",
         "orderShipping": "Versand",
-        "orderTax": "Steuer-Einstellungen",
+        "orderTax": "Mehrwertsteuer",
         "trackYourDelivery": "Ihre Bestellung wird verschickt an",
         "registerGuest": "Hallo! Fügen Sie eine E-Mail hinzu und erhalten Sie Updates"
       }
