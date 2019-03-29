@@ -62,12 +62,9 @@ export default async function calculateOrderTaxes({ context, order }) {
       .filter((taxDef) => !taxDef.taxCode || taxDef.taxCode === item.taxCode)
       .map((taxDef) => {
         let tax = 0;
-        let taxableAmount = null;
         if (taxDef.rateIsTaxInclusive) {
-          tax = item.subtotal.amount * taxDef.rate / (1 + taxDef.rate);
-          // taxable amount is calculated when all inclusive taxes are calculated
+          tax = item.subtotal.amount * taxDef.rate / (1 - taxDef.rate);
         } else {
-          taxableAmount = item.subtotal.amount;
           tax = item.subtotal.amount * taxDef.rate;
         }
         return {
@@ -75,7 +72,7 @@ export default async function calculateOrderTaxes({ context, order }) {
           jurisdictionId: taxDef._id,
           sourcing: taxDef.taxLocale,
           tax,
-          taxableAmount,
+          taxableAmount: item.subtotal.amount,
           taxName: taxDef.name,
           taxRate: taxDef.rate
         };
@@ -87,46 +84,32 @@ export default async function calculateOrderTaxes({ context, order }) {
   let totalTax = 0;
   const groupTaxes = {};
   const itemTaxes = items.map((item) => {
-    let itemTaxableAmount;
-    let itemTax = 0;
     const taxes = taxesForItem(item);
-    if (taxes.length === 0) {
-      itemTaxableAmount = 0;
-    } else {
-      const itemInclusiveTax = taxes.reduce((inclusiveTax, taxDef) => {
-        if (taxDef.taxableAmount === null) {
-          return inclusiveTax + taxDef.tax;
-        }
-        return 0;
-      }, 0);
 
-      // The taxable amount for the item as a whole is the subtotal amount
-      // minus all inclusive taxes if the item is taxable.
-      itemTaxableAmount = item.subtotal.amount - itemInclusiveTax;
+    // Update the group taxes list
+    taxes.forEach((taxDef) => {
+      const { jurisdictionId } = taxDef;
+      if (groupTaxes[jurisdictionId]) {
+        groupTaxes[jurisdictionId].tax += taxDef.tax;
+        groupTaxes[jurisdictionId].taxableAmount += taxDef.taxableAmount;
+      } else {
+        groupTaxes[jurisdictionId] = {
+          ...taxDef,
+          _id: Random.id()
+        };
+      }
+    });
 
-      // Update the group taxes list
-      taxes.forEach((taxDef) => {
-        // set taxable amount for inclusive taxes
-        if (taxDef.taxableAmount === null) {
-          taxDef.taxableAmount = itemTaxableAmount;
-        }
-        const { jurisdictionId, tax } = taxDef;
-        if (groupTaxes[jurisdictionId]) {
-          groupTaxes[jurisdictionId].tax += tax;
-          groupTaxes[jurisdictionId].taxableAmount += taxDef.taxableAmount;
-        } else {
-          groupTaxes[jurisdictionId] = {
-            ...taxDef,
-            _id: Random.id()
-          };
-        }
-        // The tax for the item as a whole is the sum of all applicable taxes.
-        itemTax += tax;
-      });
+    // The taxable amount for the item as a whole is the maximum amount that was
+    // taxed by any of the found tax jurisdictions.
+    const itemTaxableAmount = taxes.reduce((maxTaxableAmount, taxDef) => {
+      if (taxDef.taxableAmount > maxTaxableAmount) return taxDef.taxableAmount;
+      return maxTaxableAmount;
+    }, 0);
+    totalTaxableAmount += itemTaxableAmount;
 
-      totalTaxableAmount += itemTaxableAmount;
-    }
-
+    // The tax for the item as a whole is the sum of all applicable taxes.
+    const itemTax = taxes.reduce((sum, taxDef) => sum + taxDef.tax, 0);
     totalTax += itemTax;
 
     return {
