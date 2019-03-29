@@ -187,16 +187,7 @@ function xformCartFulfillmentGroup(fulfillmentGroup, cart) {
  */
 export async function xformCartCheckout(collections, cart) {
   // itemTotal is qty * amount for each item, summed
-  let itemTotal = 0;
-  let itemNet = 0;
-  cart.items.forEach((item) => {
-    if (item.taxableAmount > 0) {
-      itemNet += item.taxableAmount;
-    } else {
-      itemNet += item.subtotal.amount;
-    }
-    itemTotal += item.subtotal.amount;
-  });
+  const itemTotal = (cart.items || []).reduce((sum, item) => (sum + item.subtotal.amount), 0);
 
   // shippingTotal is shipmentMethod.rate for each item, summed
   // handlingTotal is shipmentMethod.handling for each item, summed
@@ -236,7 +227,7 @@ export async function xformCartCheckout(collections, cart) {
   // surchargeTotal is sum of all surcharges is qty * amount for each item, summed
   const surchargeTotal = (cart.surcharges || []).reduce((sum, surcharge) => (sum + surcharge.amount), 0);
 
-  const total = Math.max(0, itemNet + fulfillmentTotal + taxTotal + surchargeTotal - discountTotal);
+  const total = Math.max(0, itemTotal + fulfillmentTotal + taxTotal + surchargeTotal - discountTotal);
 
   let fulfillmentTotalMoneyObject = null;
   if (fulfillmentTotal !== null) {
