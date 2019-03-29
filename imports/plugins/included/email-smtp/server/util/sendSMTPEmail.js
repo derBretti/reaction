@@ -25,7 +25,7 @@ export default function sendSMTPEmail({ job, sendEmailCompleted, sendEmailFailed
     return sendEmailFailed(job, "Mail not configured");
   }
 
-  if (smtpProviderNames.includes(mailServiceName) === false) {
+  if (smtpProviderNames.includes(mailServiceName) === false && mailServiceName !== "custom") {
     // Non-SMTP email provider is configured. Skip, assuming another plugin will handle job
     return;
   }
