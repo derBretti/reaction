@@ -25,6 +25,11 @@ export const TaxPackageConfig = PackageConfig.clone().extend({
   "settings.defaultTaxCode": {
     type: String,
     optional: true
+  },
+  "settings.includeTaxInItemPrice": {
+    type: Boolean,
+    defaultValue: false,
+    optional: true
   }
 });
 

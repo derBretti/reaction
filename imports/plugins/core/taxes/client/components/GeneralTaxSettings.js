@@ -4,6 +4,7 @@ import { uniqueId } from "lodash";
 import { Form } from "reacto-form";
 import { i18next } from "/client/api";
 import Button from "@reactioncommerce/components/Button/v1";
+import Checkbox from "@reactioncommerce/components/Checkbox/v1";
 import ErrorsBlock from "@reactioncommerce/components/ErrorsBlock/v1";
 import Field from "@reactioncommerce/components/Field/v1";
 import Select from "@reactioncommerce/components/Select/v1";
@@ -56,6 +57,7 @@ export default class GeneralTaxSettings extends Component {
     const primaryTaxServiceNameInputId = `primaryTaxServiceName_${this.uniqueInstanceIdentifier}`;
     const fallbackTaxServiceNameInputId = `fallbackTaxServiceName_${this.uniqueInstanceIdentifier}`;
     const defaultTaxCodeInputId = `defaultTaxCode_${this.uniqueInstanceIdentifier}`;
+    const includeTaxInItemPriceId = `includeTaxInItemPrice_${this.uniqueInstanceIdentifier}`;
 
     return (
       <div className="clearfix">
@@ -77,6 +79,10 @@ export default class GeneralTaxSettings extends Component {
           <Field name="defaultTaxCode" label={i18next.t("admin.taxSettings.defaultTaxCode")} labelFor={defaultTaxCodeInputId}>
             <TextInput id={defaultTaxCodeInputId} name="defaultTaxCode" />
             <ErrorsBlock names={["defaultTaxCode"]} />
+          </Field>
+          <Field name="includeTaxInItemPrice" label={i18next.t("admin.taxSettings.includeTaxInItemPrice")} labelFor={includeTaxInItemPriceId}>
+            <Checkbox id={includeTaxInItemPriceId} name="includeTaxInItemPrice" />
+            <ErrorsBlock names={["includeTaxInItemPrice"]} />
           </Field>
         </Form>
         <div className="clearfix">
