@@ -38,6 +38,14 @@ export default async function getUpdatedCartItems(context, cart) {
       break;
     }
 
+    if (taxSummary.netAmount !== undefined && taxSummary.netAmount !== null) {
+      if (combinedSummary.netAmount === undefined) {
+        combinedSummary.netAmount = taxSummary.netAmount;
+      } else {
+        combinedSummary.netAmount += taxSummary.netAmount;
+      }
+    }
+
     combinedSummary.calculatedAt = taxSummary.calculatedAt;
     combinedSummary.calculatedByTaxServiceName = taxSummary.calculatedByTaxServiceName;
     combinedSummary.tax += taxSummary.tax;

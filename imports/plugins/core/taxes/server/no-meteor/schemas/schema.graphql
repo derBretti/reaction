@@ -127,6 +127,9 @@ type TaxSummary {
   "A reference ID for the external system that calculated the taxes"
   referenceId: String
 
+  "The sum of `itemTotal` and `fulfillmentTotal`, minus `discountTotal` excluding all taxes"
+  netAmount: Money
+
   "Total tax calculated by the active tax service"
   tax: Money!
 

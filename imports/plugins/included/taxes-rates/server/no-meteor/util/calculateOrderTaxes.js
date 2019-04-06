@@ -39,17 +39,31 @@ async function getTaxesForShop(collections, order) {
 }
 
 /**
+ * @summary Gets setting which determines wheter taxes are included in item prices or not
+ * @param {Object} collections Map of MongoDB collections
+ * @param {Object} order The order
+ * @returns {Boolean} true if taxes are included, false othewise
+ */
+async function isTaxIncluded(collections, order) {
+  const { Packages } = collections;
+  const { shopId } = order;
+  const plugin = await Packages.findOne({ name: "reaction-taxes", shopId });
+  return !!plugin.settings.includeTaxInItemPrice;
+}
+
+/**
  * @summary Calculate and return taxes for an order
  * @param {Object} context App context
  * @param {Object} order The order
  * @returns {Object|null} Calculated tax information, in `TaxServiceResult` schema, or `null` if can't calculate
  */
 export default async function calculateOrderTaxes({ context, order }) {
-  const { items, shippingAddress } = order;
+  const { items, shippingAddress, fulfillmentPrices } = order;
 
   if (!shippingAddress) return null;
 
   const allTaxes = await getTaxesForShop(context.collections, order);
+  const includeTaxInItemPrice = await isTaxIncluded(context.collections, order);
 
   /**
    * @param {Object} item The item
@@ -82,6 +96,7 @@ export default async function calculateOrderTaxes({ context, order }) {
   // calculate line item taxes
   let totalTaxableAmount = 0;
   let totalTax = 0;
+  let netItemsSum = 0;
   const groupTaxes = {};
   const itemTaxes = items.map((item) => {
     const taxes = taxesForItem(item);
@@ -112,6 +127,8 @@ export default async function calculateOrderTaxes({ context, order }) {
     const itemTax = taxes.reduce((sum, taxDef) => sum + taxDef.tax, 0);
     totalTax += itemTax;
 
+    // no matter if item is taxable, add subtotal to net amount
+    netItemsSum += item.subtotal.amount;
     return {
       itemId: item._id,
       tax: itemTax,
@@ -121,12 +138,21 @@ export default async function calculateOrderTaxes({ context, order }) {
   });
 
   // Eventually tax shipping as and where necessary here. Not yet implemented.
+  // Assume shipping to be tax free for now.
+  let netAmount;
+  if (includeTaxInItemPrice) {
+    netAmount = netItemsSum;
+    if (fulfillmentPrices.total) {
+      netAmount += fulfillmentPrices.total.amount;
+    }
+  }
 
   return {
     itemTaxes,
     taxSummary: {
       calculatedAt: new Date(),
       calculatedByTaxServiceName: TAX_SERVICE_NAME,
+      netAmount,
       tax: totalTax,
       taxableAmount: totalTaxableAmount,
       taxes: Object.values(groupTaxes)

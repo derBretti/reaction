@@ -12,6 +12,7 @@ import { xformRateToRateObject } from "@reactioncommerce/reaction-graphql-xforms
 export default async function orderSummary(context, order) {
   const { currencyCode, shipping: fulfillmentMethods } = order;
   const totalDiscounts = [];
+  const totalNetAmount = [];
   const totalShipping = [];
   const totalSubtotal = [];
   const totalSurcharges = [];
@@ -21,9 +22,10 @@ export default async function orderSummary(context, order) {
 
   // Loop over each fulfillmentGroup (shipping[]), and push all values into `totalX` array
   fulfillmentMethods.forEach((fulfillmentMethod) => {
-    const { invoice: { discounts, shipping, subtotal, surcharges, taxableAmount, taxes, total } } = fulfillmentMethod;
+    const { invoice: { discounts, netAmount, shipping, subtotal, surcharges, taxableAmount, taxes, total } } = fulfillmentMethod;
 
     totalDiscounts.push(discounts);
+    totalNetAmount.push(netAmount);
     totalShipping.push(shipping);
     totalSubtotal.push(subtotal);
     totalSurcharges.push(surcharges);
@@ -34,6 +36,12 @@ export default async function orderSummary(context, order) {
 
   // Reduce each `totalX` array to get order total from all fulfillmentGroups
   const totalDiscountsAmount = totalDiscounts.reduce((acc, value) => acc + value, 0);
+  const totalNetTotal = totalNetAmount.reduce((acc, value) => {
+    if (acc === null) {
+      return value;
+    }
+    return acc + value;
+  }, null);
   const totalShippingAmount = totalShipping.reduce((acc, value) => acc + value, 0);
   const totalSubtotalAmount = totalSubtotal.reduce((acc, value) => acc + value, 0);
   const totalSurchargesAmount = totalSurcharges.reduce((acc, value) => acc + value, 0);
@@ -56,6 +64,10 @@ export default async function orderSummary(context, order) {
     },
     itemTotal: {
       amount: totalSubtotalAmount,
+      currencyCode
+    },
+    netTotal: {
+      amount: totalNetTotal,
       currencyCode
     },
     surchargeTotal: {

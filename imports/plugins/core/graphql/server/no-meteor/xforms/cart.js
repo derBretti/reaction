@@ -217,9 +217,10 @@ export async function xformCartCheckout(collections, cart) {
   // so that we can set to null and break if we hit a not-yet-calculated item.
   let taxTotal = null;
   let taxableAmount = null;
+  let netAmount = null;
   const { taxSummary } = cart;
   if (taxSummary) {
-    ({ tax: taxTotal, taxableAmount } = taxSummary);
+    ({ netAmount, tax: taxTotal, taxableAmount } = taxSummary);
   }
 
   const discountTotal = cart.discount || 0;
@@ -239,6 +240,7 @@ export async function xformCartCheckout(collections, cart) {
 
   let taxTotalMoneyObject = null;
   let effectiveTaxRateObject = null;
+  let netTotalMoneyObject = null;
   if (taxTotal !== null) {
     taxTotalMoneyObject = {
       amount: taxTotal,
@@ -248,6 +250,12 @@ export async function xformCartCheckout(collections, cart) {
       const effectiveTaxRate = taxSummary.tax / taxSummary.taxableAmount;
       effectiveTaxRateObject = xformRateToRateObject(effectiveTaxRate);
     }
+  }
+  if (netAmount !== null) {
+    netTotalMoneyObject = {
+      amount: netAmount,
+      currencyCode: cart.currencyCode
+    };
   }
 
   fulfillmentGroups = fulfillmentGroups.map((fulfillmentGroup) => xformCartFulfillmentGroup(fulfillmentGroup, cart));
@@ -266,6 +274,7 @@ export async function xformCartCheckout(collections, cart) {
         amount: itemTotal,
         currencyCode: cart.currencyCode
       },
+      netTotal: netTotalMoneyObject,
       taxableAmount: {
         amount: taxableAmount,
         currencyCode: cart.currencyCode

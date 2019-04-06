@@ -316,6 +316,7 @@
         "discount": "Discount",
         "head": "Your cart",
         "items": "Items in cart",
+        "netAmount": "Total (excl. tax)" ,
         "orderItems": "Items in order",
         "subtotal": "Sub total",
         "shipping": "Shipping",

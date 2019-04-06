@@ -329,10 +329,15 @@
                                               <td valign="top" align="right" style="font-size:12px; line-height:normal; color:#4c4c4d; font-family:Arial, helvetica;">Shipping: {{billing.shipping}}</td>
                                             </tr>
                                             <tr>
-                                              <td valign="top" align="right" style="font-size:12px; line-height:normal; color:#4c4c4d; font-family:Arial, helvetica;">Tax: {{billing.taxes}}</td>
-                                            </tr>
-                                            <tr>
                                               <td valign="top" align="right" style="font-size:12px; line-height:normal; color:#4c4c4d; font-family:Arial, helvetica;">Discounts: {{billing.discounts}}</td>
+                                            </tr>
+                                            {{#if billing.displayNetAmount}}
+                                            <tr>
+                                              <td valign="top" align="right" style="font-size:12px; line-height:normal; color:#4c4c4d; font-family:Arial, helvetica;">Total (excl. tax): {{billing.netAmount}}</td>
+                                            </tr>
+                                            {{/if}}
+                                            <tr>
+                                              <td valign="top" align="right" style="font-size:12px; line-height:normal; color:#4c4c4d; font-family:Arial, helvetica;">Tax: {{billing.taxes}}</td>
                                             </tr>
                                             <tr>
                                               <td valign="top" align="left" height="10" style="line-height:1px; font-size:1px;">&nbsp;</td>

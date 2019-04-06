@@ -217,7 +217,7 @@ class Invoice extends Component {
     return (
       <div className="order-summary-form-group">
         <hr/>
-        <strong>TOTAL</strong>
+        <strong><Components.Translation defaultValue="TOTAL" i18nKey="cartSubTotals.total" /></strong>
         <div className="invoice-details">
           <strong>{formatPriceString(this.props.invoice.total)}</strong>
         </div>
@@ -257,13 +257,6 @@ class Invoice extends Component {
           </div>
         </div>
 
-        <div className="order-summary-form-group">
-          <strong><Components.Translation defaultValue="Tax" i18nKey="cartSubTotals.tax"/></strong>
-          <div className="invoice-details">
-            {formatPriceString(invoice.taxes)}
-          </div>
-        </div>
-
         {discounts &&
           <div>
             <div className="order-summary-form-group">
@@ -276,6 +269,21 @@ class Invoice extends Component {
           </div>
         }
         {this.renderSurcharge()}
+        {invoice.netAmount !== undefined && invoice.netAmount !== null &&
+          <div className="order-summary-form-group">
+            <hr/>
+            <strong><Components.Translation defaultValue="Total (excl. tax)" i18nKey="cartSubTotals.netAmount" /></strong>
+            <div className="invoice-details">
+              <strong>{formatPriceString(invoice.netAmount)}</strong>
+            </div>
+          </div>
+        }
+        <div className="order-summary-form-group">
+          <strong><Components.Translation defaultValue="Tax" i18nKey="cartSubTotals.tax"/></strong>
+          <div className="invoice-details">
+            {formatPriceString(invoice.taxes)}
+          </div>
+        </div>
         {this.renderTotal()}
         {this.renderRefundsInfo()}
       </div>

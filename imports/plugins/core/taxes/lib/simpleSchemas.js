@@ -51,6 +51,11 @@ export const TaxSummary = new SimpleSchema({
     blackbox: true,
     optional: true
   },
+  netAmount: {
+    type: Number,
+    min: 0,
+    optional: true
+  },
   referenceId: {
     type: String,
     optional: true

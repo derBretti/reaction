@@ -9,6 +9,7 @@
       "cartCompleted": {
         "orderSummary": "Order Summary",
         "discountTotal": "Discount Total",
+        "netAmount": "Total (excl. tax)" ,
         "orderTotal": "Order Total",
         "fulfilledBy": "Fulfilled by",
         "orderItems": "Items in order",

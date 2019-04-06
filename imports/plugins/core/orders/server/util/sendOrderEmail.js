@@ -84,6 +84,14 @@ export default function sendOrderEmail(order, action) {
   // TODO need to make this fully support multiple fulfillment groups. Now it's just collapsing into one
   const amount = order.shipping.reduce((sum, group) => sum + group.invoice.total, 0);
   const discounts = order.shipping.reduce((sum, group) => sum + group.invoice.discounts, 0);
+  let displayNetAmount = false;
+  const netAmountAmount = order.shipping.reduce((sum, group) => {
+    if (group.invoice.netAmount !== undefined && group.invoice.netAmount !== null) {
+      displayNetAmount = true;
+      return sum + group.invoice.netAmount;
+    }
+    return sum;
+  }, 0);
   const subtotal = order.shipping.reduce((sum, group) => sum + group.invoice.subtotal, 0);
   const taxes = order.shipping.reduce((sum, group) => sum + group.invoice.taxes, 0);
   const shippingCost = order.shipping.reduce((sum, group) => sum + group.invoice.shipping, 0);
@@ -175,6 +183,10 @@ export default function sendOrderEmail(order, action) {
     }
   }
 
+  let netAmount;
+  if (netAmountAmount !== null) {
+    netAmount = formatMoney(netAmountAmount * userCurrencyExchangeRate, userCurrency);
+  }
   const copyrightDate = new Date().getFullYear();
 
   // Merge data into single object to pass to email template
@@ -215,6 +227,8 @@ export default function sendOrderEmail(order, action) {
     order,
     billing: {
       address: billingAddressForEmail,
+      displayNetAmount,
+      netAmount,
       payments: (order.payments || []).map((payment) => ({
         displayName: payment.displayName,
         displayAmount: formatMoney(payment.amount * userCurrencyExchangeRate, userCurrency)

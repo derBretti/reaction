@@ -11,6 +11,7 @@ import { Components, registerComponent } from "@reactioncommerce/reaction-compon
  */
 class ShopOrderSummary extends Component {
   static propTypes = {
+    netAmount: PropTypes.number,
     quantityTotal: PropTypes.number.isRequired,
     shipping: PropTypes.number.isRequired,
     shopName: PropTypes.string.isRequired,
@@ -19,7 +20,7 @@ class ShopOrderSummary extends Component {
   };
 
   render() {
-    const { quantityTotal, shipping, shopName, subTotal, taxes } = this.props;
+    const { netAmount, quantityTotal, shipping, shopName, subTotal, taxes } = this.props;
 
     return (
       <div className="order-details-info-box-content">
@@ -50,6 +51,16 @@ class ShopOrderSummary extends Component {
             </div>
             <div className="order-summary-value">
               <Components.Currency amount={shipping}/>
+            </div>
+          </div>
+        }
+        {netAmount !== undefined && netAmount !== null &&
+          <div className="order-summary-line">
+            <div className="order-summary-title">
+              <Components.Translation defaultValue="Total (excl. tax)" i18nKey={"cartCompleted.netAmount"}/>
+            </div>
+            <div className="order-summary-value">
+              <Components.Currency amount={netAmount}/>
             </div>
           </div>
         }

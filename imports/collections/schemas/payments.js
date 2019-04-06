@@ -25,6 +25,11 @@ export const Invoice = new SimpleSchema({
     type: Number,
     min: 0
   },
+  netAmount: {
+    type: Number,
+    min: 0,
+    optional: true
+  },
   shipping: {
     type: Number,
     min: 0

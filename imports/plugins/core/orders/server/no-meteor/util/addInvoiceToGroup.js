@@ -32,12 +32,14 @@ export default function addInvoiceToGroup({
   // Totals
   // To avoid rounding errors, be sure to keep this calculation the same between here and
   // `buildOrderInputFromCart.js` in the client code.
-  const total = Math.max(0, itemTotal + fulfillmentTotal + taxTotal + groupSurchargeTotal - groupDiscountTotal);
+  const netAmount = Math.max(0, itemTotal + fulfillmentTotal + groupSurchargeTotal - groupDiscountTotal);
+  const total = netAmount + taxTotal;
 
   group.invoice = {
     currencyCode,
     discounts: groupDiscountTotal,
     effectiveTaxRate,
+    netAmount,
     shipping: fulfillmentTotal,
     subtotal: itemTotal,
     surcharges: groupSurchargeTotal,

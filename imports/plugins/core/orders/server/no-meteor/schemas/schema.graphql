@@ -131,6 +131,9 @@ type OrderSummary {
   "The combined prices of all cart items"
   itemTotal: Money!
 
+  "The sum of `itemTotal` and `fulfillmentTotal`, minus `discountTotal` excluding all taxes"
+  netTotal: Money
+
   "The total amount that was deemed taxable by the tax service"
   taxableAmount: Money!
 

@@ -20,6 +20,7 @@ class CompletedOrderSummary extends Component {
         discounts: PropTypes.number.isRequired,
         shipping: PropTypes.number.isRequired,
         subtotal: PropTypes.number.isRequired,
+        netTotal: PropTypes.number,
         taxes: PropTypes.number.isRequired,
         total: PropTypes.number.isRequired
       }).isRequired,
@@ -33,7 +34,20 @@ class CompletedOrderSummary extends Component {
   render() {
     const { fulfillmentGroups } = this.props;
 
+    let netTotal = null;
+    let taxesTotal = 0;
+
     const discountTotal = fulfillmentGroups.reduce((sum, group) => sum + group.invoice.discounts, 0);
+    fulfillmentGroups.forEach((group) => {
+      if (group.invoice.netAmount !== undefined && group.invoice.netAmount !== null) {
+        if (netTotal === null) {
+          netTotal = group.invoice.netAmount;
+        } else {
+          netTotal += group.invoice.netAmount;
+        }
+        taxesTotal += group.invoice.taxes;
+      }
+    });
     const surchargeTotal = fulfillmentGroups.reduce((sum, group) => sum + group.invoice.surcharges, 0);
     const orderTotal = fulfillmentGroups.reduce((sum, group) => sum + group.invoice.total, 0);
 
@@ -45,6 +59,7 @@ class CompletedOrderSummary extends Component {
         <div className="order-details-info-box">
           {fulfillmentGroups.map((group) => (
             <ShopOrderSummary
+              netAmount={group.invoice.netAmount}
               key={group._id}
               quantityTotal={group.totalItemQuantity}
               shipping={group.invoice.shipping}
@@ -71,6 +86,26 @@ class CompletedOrderSummary extends Component {
               </div>
               <div className="order-summary-surcharge-value">
                 <Components.Currency amount={surchargeTotal}/>
+              </div>
+            </div>
+          }
+          {netTotal !== null &&
+            <div className="order-summary-line">
+              <div className="order-summary-net-title">
+                <Components.Translation defaultValue="Total (excl. tax)" i18nKey={"cartCompleted.netTotal"}/>
+              </div>
+              <div className="order-summary-net-value">
+                <Components.Currency amount={netTotal}/>
+              </div>
+            </div>
+          }
+          {netTotal !== null &&
+            <div className="order-summary-line">
+              <div className="order-summary-surcharge-title">
+                <Components.Translation defaultValue="Tax" i18nKey={"cartCompleted.orderTax"}/>
+              </div>
+              <div className="order-summary-surcharge-value">
+                <Components.Currency amount={taxesTotal}/>
               </div>
             </div>
           }
