@@ -4,11 +4,14 @@ import ReactionError from "@reactioncommerce/reaction-error";
 /**
  * @summary Builds an order item
  * @param {Object} context an object containing the per-request state
+ * @param {Object} billingAddress The biling address relevant for price calculation. See address schema.
  * @param {String} currencyCode The order currency code
  * @param {Object} inputItem Order item input. See schema.
+ * @param {Object} shippingAddress The shipping address relevant for price calculation. See address schema.
+ * @param {String} shopId The shop ID
  * @returns {Promise<Object>} An order item, matching the schema needed for insertion in the Orders collection
  */
-export default async function buildOrderItem(context, { currencyCode, inputItem }) {
+export default async function buildOrderItem(context, { billingAddress, shippingAddress, currencyCode, inputItem, shopId }) {
   const {
     addedAt,
     price,
@@ -19,10 +22,11 @@ export default async function buildOrderItem(context, { currencyCode, inputItem 
   const {
     catalogProduct: chosenProduct,
     catalogProductVariant: chosenVariant,
+    grossPrice,
     price: finalPrice
-  } = await context.queries.getCurrentCatalogPriceForProductConfiguration(productConfiguration, currencyCode, context.collections);
+  } = await context.queries.getCurrentCatalogPriceForProductConfiguration(productConfiguration, currencyCode, context.collections, { billingAddress, shippingAddress, shopId });
 
-  if (finalPrice !== price) {
+  if (grossPrice !== price) {
     throw new ReactionError("invalid", `Provided price for the "${chosenVariant.title}" item does not match current published price`);
   }
 
