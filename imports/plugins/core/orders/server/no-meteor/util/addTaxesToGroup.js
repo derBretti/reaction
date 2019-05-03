@@ -38,5 +38,5 @@ export default async function addTaxesToGroup(context, {
   }
 
   // This will mutate `group` to add whatever tax fields the `taxes` plugin has added to the schemas.
-  return mutations.setTaxesOnOrderFulfillmentGroup(context, { group, commonOrder });
+  return mutations.setTaxesOnOrderFulfillmentGroup(context, { billingAddress, group, commonOrder });
 }
