@@ -50,6 +50,7 @@ private/plugins/*
 
 imports/plugins/custom/*
 !imports/plugins/custom/.gitkeep
+!imports/plugins/custom/gross-pricing
 
 .reaction/config.json
 
