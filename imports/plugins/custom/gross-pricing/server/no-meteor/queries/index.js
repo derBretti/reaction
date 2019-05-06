@@ -1,9 +1,9 @@
 import catalogItems from "./catalogItems";
 import catalogItemProduct from "./catalogItemProduct";
-import getCurrentCatalogPriceForProductConfiguration from "./getCurrentCatalogPriceForProductConfiguration";
+import getVariantPrice from "./getVariantPrice";
 
 export default {
   catalogItemProduct,
   catalogItems,
-  getCurrentCatalogPriceForProductConfiguration
+  getVariantPrice
 };

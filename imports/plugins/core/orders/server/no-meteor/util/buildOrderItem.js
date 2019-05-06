@@ -1,3 +1,4 @@
+import { toFixed } from "accounting-js";
 import Random from "@reactioncommerce/random";
 import ReactionError from "@reactioncommerce/reaction-error";
 
@@ -12,23 +13,57 @@ import ReactionError from "@reactioncommerce/reaction-error";
  * @returns {Promise<Object>} An order item, matching the schema needed for insertion in the Orders collection
  */
 export default async function buildOrderItem(context, { billingAddress, shippingAddress, currencyCode, inputItem, shopId }) {
+  const { queries } = context;
   const {
     addedAt,
     price,
-    productConfiguration,
+    productConfiguration: {
+      productId,
+      productVariantId
+    },
     quantity
   } = inputItem;
 
   const {
     catalogProduct: chosenProduct,
-    catalogProductVariant: chosenVariant,
-    grossPrice,
-    price: finalPrice
-  } = await context.queries.getCurrentCatalogPriceForProductConfiguration(productConfiguration, currencyCode, context.collections, { billingAddress, shippingAddress, shopId });
+    variant: chosenVariant
+  } = await queries.findProductAndVariant(context, productId, productVariantId);
 
-  if (grossPrice !== price) {
-    throw new ReactionError("invalid", `Provided price for the "${chosenVariant.title}" item does not match current published price`);
+  const variantPriceInfo = await queries.getVariantPrice(context, chosenVariant, currencyCode, { billingAddress, shippingAddress, shopId });
+  const { price: finalPrice, grossPrice } = (variantPriceInfo || {});
+
+  // Handle null or undefined price returned. Don't allow sale.
+  if (!finalPrice && finalPrice !== 0) {
+    throw new ReactionError("invalid", `Unable to get current price for "${chosenVariant.title || chosenVariant._id}"`);
   }
+
+  if (grossPrice && grossPrice !== null) {
+    if (grossPrice !== price) {
+      throw new ReactionError("invalid", `Provided price for the "${chosenVariant.title}" item does not match current published price`);
+    }
+  }
+  // const {
+  //   addedAt,
+  //   price,
+  //   productConfiguration,
+  //   quantity
+  // } = inputItem;
+
+  // const {
+  //   catalogProduct: chosenProduct,
+  //   catalogProductVariant: chosenVariant,
+  //   grossPrice,
+  //   price: finalPrice
+  // } = await queries.getCurrentCatalogPriceForProductConfiguration(productConfiguration, currencyCode, context.collections, { billingAddress, shippingAddress, shopId });
+
+  // // Handle null or undefined price returned. Don't allow sale.
+  // if (!finalPrice && finalPrice !== 0) {
+  //   throw new ReactionError("invalid", `Unable to get current price for "${chosenVariant.title || chosenVariant._id}"`);
+  // }
+
+  // if (grossPrice !== price) {
+  //   throw new ReactionError("invalid", `Provided price for the "${chosenVariant.title || chosenVariant._id}" item does not match current published price`);
+  // }
 
   if (!chosenVariant.canBackorder && (quantity > chosenVariant.inventoryAvailableToSell)) {
     throw new ReactionError("invalid-order-quantity", `Quantity ordered is more than available inventory for  "${chosenVariant.title}"`);
@@ -52,7 +87,7 @@ export default async function buildOrderItem(context, { billingAddress, shipping
     productVendor: chosenProduct.vendor,
     quantity,
     shopId: chosenProduct.shopId,
-    subtotal: quantity * finalPrice,
+    subtotal: +toFixed(quantity * finalPrice, 3),
     title: chosenProduct.title,
     updatedAt: now,
     variantId: chosenVariant.variantId,
