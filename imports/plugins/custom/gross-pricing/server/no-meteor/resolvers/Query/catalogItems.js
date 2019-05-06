@@ -60,21 +60,21 @@ export default async function catalogItems(_, args, context) {
     return getPaginatedResponse(query, connectionArgs);
   } else {
     const res = await getPaginatedResponse(query, connectionArgs);
-    let accountId;
-    let cartId;
-    if (opaqueAccountId) {
-      accountId = decodeAccountOpaqueId(opaqueAccountId);
-    }
-    if (opaqueCartId) {
-      cartId = decodeCartOpaqueId(opaqueCartId);
-    }
-    const shop = await context.queries.shopById(context, shopId);
-    const { currencies } = shop;
-    const shippingAddress = await taxAddress(context, { accountId, cartId, token }, shop);
-  
     // calculate taxes
     if (res && res.nodes) {
-      res.nodes = await calculateGrossPricing({ items: res.nodes, shippingAddress, currencies }, context);
+      let accountId;
+      let cartId;
+      if (opaqueAccountId) {
+        accountId = decodeAccountOpaqueId(opaqueAccountId);
+      }
+      if (opaqueCartId) {
+        cartId = decodeCartOpaqueId(opaqueCartId);
+      }
+      const shop = await context.queries.shopById(context, shopId);
+      const { currencies } = shop;
+      const { originAddress, shippingAddress } = await taxAddress(context, { accountId, cartId, token }, shop);
+  
+      res.nodes = await calculateGrossPricing({ currencies, items: res.nodes, originAddress, shippingAddress }, context);
       return res;
     } else {
       return null;

@@ -119,9 +119,9 @@ function setGrossPricing (product, allTaxes, currencies) {
   return maxMinPricing;
 }
 
-export async function calculateGrossPricing ({ items, shippingAddress, currencies }, context) {
+export async function calculateGrossPricing ({ currencies, items, originAddress, shippingAddress }, context) {
   const { collections, shopId } = context;
-  const allTaxes = await taxesForShop(collections, { shippingAddress, shopId });
+  const allTaxes = await taxesForShop(collections, { originAddress, shippingAddress, shopId });
 
   items.forEach((item) => {
     if (item.product) {
@@ -145,6 +145,7 @@ export default async function xformsGrossPrices(node, args, context) {
 
   const shop = await context.queries.shopById(context, shopId);
   const { currencies, addressBook } = shop;
+  const originAddress = addressBook.find((address) => address.isBillingDefault);
   let isTaxable = false;
   let taxCode = null;
   let minTaxCode = null
@@ -152,10 +153,10 @@ export default async function xformsGrossPrices(node, args, context) {
 
   // use first address (change when cart with shipping or user is available)
   if (!shippingAddress) {
-    shippingAddress = addressBook.find((address) => address.isBillingDefault);
+    shippingAddress = originAddress;
   }
 
-  const allTaxes = await taxesForShop(collections, { shippingAddress, shopId });
+  const allTaxes = await taxesForShop(collections, { originAddress, shippingAddress, shopId });
 
   if (node.isTaxable && node.taxCode) {
     isTaxable = node.isTaxable;
@@ -210,7 +211,7 @@ export async function xformsWithTaxes(cart, context) {
     const shop = await context.queries.shopById(context, shopId);
     const { addressBook } = shop;
     const shippingAddress = addressBook.find((address) => address.isBillingDefault);
-    const allTaxes = await taxesForShop(collections, { shippingAddress, shopId });
+    const allTaxes = await taxesForShop(collections, { originAddress: shippingAddress, shippingAddress, shopId });
 
     cartItems.forEach((item) => {
       const { price, taxCode } = item;

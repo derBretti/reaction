@@ -45,12 +45,12 @@ export default async function catalogItemProduct(context, { _id, slug, cartId, t
   
   const shop = await context.queries.shopById(context, shopId);
   const { currencies } = shop;
-  const shippingAddress = await taxAddress(context, { accountId, cartId, token }, shop);
+  const { originAddress, shippingAddress } = await taxAddress(context, { accountId, cartId, token }, shop);
 
   // calculate taxes
   const res = await Catalog.findOne(query);
   if (res && res.product) {
-    resArr = await calculateGrossPricing({ items: [res], shippingAddress, currencies }, context);
+    resArr = await calculateGrossPricing({ currencies, items: [res], originAddress, shippingAddress }, context);
     return resArr[0];
   } else {
     return null;

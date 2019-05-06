@@ -27,7 +27,7 @@ export default async function getFulfillmentGroupTaxes(context, { accountId, bil
       const includeTaxInItemPrice = await isTaxIncluded(context.collections, shopId);
       if (includeTaxInItemPrice) {
         const shop = await context.queries.shopById(context, shopId);
-        const shippingAddress = await taxAddress(context, { accountId }, shop);
+        const { shippingAddress } = await taxAddress(context, { accountId }, shop);
         Object.assign(order, { shippingAddress });
       }
     }

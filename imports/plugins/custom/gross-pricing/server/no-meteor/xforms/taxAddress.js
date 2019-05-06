@@ -14,6 +14,7 @@
  */
 export default async function taxAddress(context, { accountId, cartId, token }, shop) {
   let cart;
+  let shippingAddress;
   const { _id: shopId } = shop;
   if (cartId && token) {
     cart = await context.queries.anonymousCartByCartId(context, { cartId, token });
@@ -28,19 +29,21 @@ export default async function taxAddress(context, { accountId, cartId, token }, 
       // this needs to change when shipping to multiple tax jurisdictions is allowed 
       const { address } = shipping[0];
       if (address) {
-        return address;
+        shippingAddress = address;
       }
     }
-  }
-  // use account address
-  if (accountId) {
+  } else if (accountId) {
+    // use account address
     const account = await context.queries.userAccount(context, accountId);
     if (account && account.profile && account.profile.addressBook && account.profile.addressBook[0]) {
-      return account.profile.addressBook[0];
+      shippingAddress = account.profile.addressBook[0];
     }
   }
   // use shop address
   const { addressBook } = shop;
-  address = addressBook.find((address) => address.isBillingDefault);
-  return address;
+  const originAddress = addressBook.find((address) => address.isBillingDefault);
+  if (!shippingAddress) {
+    shippingAddress = originAddress;
+  }
+  return { originAddress, shippingAddress };
 }

@@ -26,6 +26,7 @@ export default async function buildOrderFulfillmentGroupFromInput(context, {
 }) {
   const { data, items, selectedFulfillmentMethodId, shopId, totalPrice: expectedGroupTotal, type } = inputGroup;
   const shippingAddress = data ? data.shippingAddress : null;
+  const originAddress = data ? data.originAddress : null;
   const group = {
     _id: Random.id(),
     address: shippingAddress,
@@ -37,7 +38,7 @@ export default async function buildOrderFulfillmentGroupFromInput(context, {
   // Build the final order item objects. As part of this, we look up the variant in the system and make sure that
   // the price is what the caller expects it to be.
   if (items) {
-    group.items = await Promise.all(items.map((inputItem) => buildOrderItem(context, { billingAddress, currencyCode, inputItem, shippingAddress, shopId })));
+    group.items = await Promise.all(items.map((inputItem) => buildOrderItem(context, { billingAddress, currencyCode, inputItem, originAddress, shippingAddress, shopId })));
   } else {
     group.items = [];
   }

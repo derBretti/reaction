@@ -11,9 +11,9 @@ const TAX_SERVICE_NAME = "custom-rates";
  * @returns {Object|null} Calculated tax information, in `TaxServiceResult` schema, or `null` if can't calculate
  */
 export default async function calculateOrderTaxes({ context, order }) {
-  const { fulfillmentPrices, items, shippingAddress, shopId } = order;
+  const { fulfillmentPrices, items, originAddress, shippingAddress, shopId } = order;
 
-  if (!shippingAddress) return null;
+  if (!shippingAddress && !originAddress) return null;
 
   const includeTaxInItemPrice = await isTaxIncluded(context.collections, shopId);
 

@@ -33,13 +33,14 @@ export function taxesForItem(allTaxes, { amount, taxCode }) {
 /**
  * @summary Calculate and return taxes for order items
  * @param {Object} context App context
- * @param {Object} shippingAddress The address to apply taxes for
+ * @param {Object} originAddress The origin address to apply taxes to
+ * @param {Object} shippingAddress The destination address to apply taxes to
  * @param {String} shopId The shop id
  * @param {Object[]} items The items
  * @returns {Object[]|null} Array of calculated tax information, in `TaxServiceItemTax` schema, or `null` if can't calculate
  */
-export default async function calculateItemTaxes(context, { shippingAddress, shopId, items }) {
-  const allTaxes = await taxesForShop(context.collections, { shippingAddress, shopId });
+export default async function calculateItemTaxes(context, { originAddress, shippingAddress, shopId, items }) {
+  const allTaxes = await taxesForShop(context.collections, { originAddress, shippingAddress, shopId });
 
   return items.map((item) => {
     let taxes;

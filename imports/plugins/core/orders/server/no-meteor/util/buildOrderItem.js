@@ -8,11 +8,12 @@ import ReactionError from "@reactioncommerce/reaction-error";
  * @param {Object} billingAddress The biling address relevant for price calculation. See address schema.
  * @param {String} currencyCode The order currency code
  * @param {Object} inputItem Order item input. See schema.
+ * @param {Object} originAddress The origin address relevant for price calculation. See address schema.
  * @param {Object} shippingAddress The shipping address relevant for price calculation. See address schema.
  * @param {String} shopId The shop ID
  * @returns {Promise<Object>} An order item, matching the schema needed for insertion in the Orders collection
  */
-export default async function buildOrderItem(context, { billingAddress, shippingAddress, currencyCode, inputItem, shopId }) {
+export default async function buildOrderItem(context, { billingAddress, currencyCode, inputItem, originAddress, shippingAddress, shopId }) {
   const { queries } = context;
   const {
     addedAt,
@@ -29,7 +30,7 @@ export default async function buildOrderItem(context, { billingAddress, shipping
     variant: chosenVariant
   } = await queries.findProductAndVariant(context, productId, productVariantId);
 
-  const variantPriceInfo = await queries.getVariantPrice(context, chosenVariant, currencyCode, { billingAddress, shippingAddress, shopId });
+  const variantPriceInfo = await queries.getVariantPrice(context, chosenVariant, currencyCode, { billingAddress, originAddress, shippingAddress, shopId });
   const { price: finalPrice, grossPrice } = (variantPriceInfo || {});
 
   // Handle null or undefined price returned. Don't allow sale.

@@ -31,7 +31,7 @@ export default async function createCart(context, input) {
     if (includeTaxInItemPrice) {
       const shop = await context.queries.shopById(context, shopId);
       const { accountId } = newCart;
-      const shippingAddress = await taxAddress(context, { accountId }, shop);
+      const { shippingAddress } = await taxAddress(context, { accountId }, shop);
       const itemIds = newCart.items.map((item) => item._id);
       shipping = [{
         address: shippingAddress,
