@@ -5,6 +5,7 @@ import {
   OrderFulfillmentGroup,
   OrderItem,
   ProductVariant,
+  SelectedFulfillmentOption,
   VariantBaseSchema
 } from "/imports/collections/schemas";
 import { Taxes, TaxSummary } from "./simpleSchemas";
@@ -107,6 +108,17 @@ const variantSchemaExtension = {
     optional: true
   }
 };
+
+SelectedFulfillmentOption.extend({
+  isTaxable: {
+    type: Boolean,
+    optional: true
+  },
+  taxCode: {
+    type: String,
+    optional: true
+  }
+});
 
 VariantBaseSchema.extend(variantSchemaExtension);
 CatalogVariantSchema.extend(variantSchemaExtension);

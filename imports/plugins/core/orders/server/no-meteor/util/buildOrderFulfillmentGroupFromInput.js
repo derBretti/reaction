@@ -26,7 +26,11 @@ export default async function buildOrderFulfillmentGroupFromInput(context, {
 }) {
   const { data, items, selectedFulfillmentMethodId, shopId, totalPrice: expectedGroupTotal, type } = inputGroup;
   const shippingAddress = data ? data.shippingAddress : null;
-  const originAddress = data ? data.originAddress : null;
+
+  const shop = await context.queries.shopById(context, shopId);
+  const { addressBook } = shop;
+  const originAddress = addressBook.find((address) => address.isBillingDefault);
+
   const group = {
     _id: Random.id(),
     address: shippingAddress,
