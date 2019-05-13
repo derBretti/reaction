@@ -26,11 +26,17 @@ export default class ShippingMethodForm extends Component {
       cost: PropTypes.string,
       handling: PropTypes.string,
       rate: PropTypes.string,
+      isTaxable: PropTypes.bool,
+      taxCode: PropTypes.string,
       isEnabled: PropTypes.bool
     }),
     onCancel: PropTypes.func.isRequired,
     onDelete: PropTypes.func.isRequired,
     onSubmit: PropTypes.func.isRequired,
+    taxCodeOptions: PropTypes.arrayOf(PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      value: PropTypes.string.isRequired
+    })),
     validator: PropTypes.func
   };
 
@@ -47,7 +53,7 @@ export default class ShippingMethodForm extends Component {
   };
 
   render() {
-    const { groupOptions, isEditing, methodDoc, onCancel, onDelete, onSubmit, validator } = this.props;
+    const { groupOptions, taxCodeOptions, isEditing, methodDoc, onCancel, onDelete, onSubmit, validator } = this.props;
 
     const nameInputId = `name_${this.uniqueInstanceIdentifier}`;
     const labelInputId = `label_${this.uniqueInstanceIdentifier}`;
@@ -55,6 +61,7 @@ export default class ShippingMethodForm extends Component {
     const costInputId = `cost_${this.uniqueInstanceIdentifier}`;
     const handlingInputId = `handling_${this.uniqueInstanceIdentifier}`;
     const rateInputId = `rate_${this.uniqueInstanceIdentifier}`;
+    const taxCodeInputId = `tax_code_${this.uniqueInstanceIdentifier}`;
 
     return (
       <div className="clearfix">
@@ -86,6 +93,14 @@ export default class ShippingMethodForm extends Component {
           <Field name="isEnabled">
             <Checkbox name="isEnabled" label={i18next.t("shippingMethod.enabled")} />
             <ErrorsBlock names={["isEnabled"]} />
+          </Field>
+          <Field name="isTaxable">
+            <Checkbox name="isTaxable" label={i18next.t("taxSettings.taxable")} />
+            <ErrorsBlock names={["isTaxable"]} />
+          </Field>
+          <Field name="taxCode" label={i18next.t("taxSettings.taxCode")} labelFor={taxCodeInputId}>
+            <Select id={taxCodeInputId} name="taxCode" options={taxCodeOptions} />
+            <ErrorsBlock names={["taxCode"]} />
           </Field>
         </Form>
         <div className="clearfix">

@@ -27,7 +27,15 @@ const fulfillmentMethodFormSchema = new SimpleSchema({
     type: Number,
     min: 0
   },
-  isEnabled: Boolean
+  isEnabled: Boolean,
+  isTaxable: {
+    type: Boolean,
+    optional: true
+  },
+  taxCode: {
+    type: String,
+    optional: true
+  }
 });
 
 const fulfillmentMethodValidator = fulfillmentMethodFormSchema.getFormValidator();
@@ -56,6 +64,10 @@ export default class ShippingRatesSettings extends Component {
   static propTypes = {
     fulfillmentMethods: PropTypes.arrayOf(PropTypes.shape({
       _id: PropTypes.string
+    })),
+    taxCodes: PropTypes.arrayOf(PropTypes.shape({
+      code: PropTypes.string,
+      label: PropTypes.string
     }))
   };
 
@@ -274,9 +286,13 @@ export default class ShippingRatesSettings extends Component {
   }
 
   renderShippingMethodForm() {
-    const { fulfillmentMethods } = this.props;
+    const { fulfillmentMethods, taxCodes } = this.props;
     const { editingId } = this.state;
 
+    let taxCodeOptions;
+    if (taxCodes) {
+      taxCodeOptions = taxCodes.map((taxCode) => ({ value: taxCode.code, label: taxCode.label }));
+    }
     let methodDoc = null;
     if (editingId && fulfillmentMethods && fulfillmentMethods.length) {
       methodDoc = fulfillmentMethods.find((method) => method._id === editingId);
@@ -308,6 +324,7 @@ export default class ShippingRatesSettings extends Component {
     return (
       <ShippingMethodForm
         groupOptions={groupOptions}
+        taxCodeOptions={taxCodeOptions}
         isEditing={!!editingId}
         methodDoc={methodDoc}
         onCancel={this.handleFormCancel}

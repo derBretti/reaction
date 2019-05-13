@@ -1,8 +1,10 @@
 import Reaction from "/imports/plugins/core/core/server/Reaction";
-import calculateOrderTaxes from "./server/no-meteor/util/calculateOrderTaxes";
 import calculateItemTaxes from "./server/no-meteor/util/calculateItemTaxes";
+import calculateOrderTaxes from "./server/no-meteor/util/calculateOrderTaxes";
+import calculateShippingTaxes from "./server/no-meteor/util/calculateShippingTaxes";
 import getTaxCodes from "./server/no-meteor/util/getTaxCodes";
 import isTaxIncluded from "./server/no-meteor/util/isTaxIncluded";
+import taxesForItem from "./server/no-meteor/util/taxesForItem";
 import taxesForShop from "./server/no-meteor/util/taxesForShop";
 import startup from "./server/no-meteor/startup";
 
@@ -19,10 +21,12 @@ Reaction.registerPackage({
       displayName: "Custom Rates",
       name: "custom-rates",
       functions: {
-        calculateOrderTaxes,
         calculateItemTaxes,
+        calculateOrderTaxes,
+        calculateShippingTaxes,
         getTaxCodes,
         isTaxIncluded,
+        taxesForItem,
         taxesForShop
       }
     }

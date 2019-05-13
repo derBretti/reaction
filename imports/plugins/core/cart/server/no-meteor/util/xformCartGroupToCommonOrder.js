@@ -45,6 +45,7 @@ export default async function xformCartGroupToCommonOrder(cart, group, context) 
     total: null
   };
   let fulfillmentMethodId;
+  let fulfillmentMethod;
 
   if (shipmentMethod) {
     fulfillmentPrices = {
@@ -61,7 +62,13 @@ export default async function xformCartGroupToCommonOrder(cart, group, context) 
         currencyCode
       }
     };
-
+    fulfillmentMethod = {
+      _id: shipmentMethod._id,
+      isTaxable: shipmentMethod.isTaxable || false,
+      handling: shipmentMethod.handling,
+      rate: shipmentMethod.rate,
+      taxCode: shipmentMethod.taxCode
+    };
     fulfillmentMethodId = shipmentMethod._id;
   }
 
@@ -104,6 +111,7 @@ export default async function xformCartGroupToCommonOrder(cart, group, context) 
     billingAddress: null,
     cartId: cart._id,
     currencyCode: cart.currencyCode,
+    fulfillmentMethod,
     fulfillmentMethodId,
     fulfillmentPrices,
     fulfillmentType,

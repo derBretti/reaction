@@ -50,12 +50,12 @@ export default async function selectFulfillmentOptionForGroup(context, input) {
   });
   if (matchedCount !== 1) throw new ReactionError("server-error", "Unable to update cart");
 
+  const updatedCart = await Cart.findOne({ _id: cartId });
+
   await appEvents.emit("afterCartUpdate", {
-    cart,
+    cart: updatedCart,
     updatedBy: userId
   });
 
-  const updatedCart = await Cart.findOne({ _id: cartId });
-
-  return { cart: updatedCart };
+  return { cart: await Cart.findOne({ _id: cartId }) };
 }

@@ -56,6 +56,8 @@ export default async function addShipmentMethodToGroup(context, {
     group: selectedFulfillmentMethod.method.group,
     name: selectedFulfillmentMethod.method.name,
     handling: selectedFulfillmentMethod.handlingPrice,
-    rate: selectedFulfillmentMethod.shippingPrice
+    isTaxable: selectedFulfillmentMethod.isTaxable,
+    rate: selectedFulfillmentMethod.shippingPrice,
+    taxCode: selectedFulfillmentMethod.taxCode
   };
 }

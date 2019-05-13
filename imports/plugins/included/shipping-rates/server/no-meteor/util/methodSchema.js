@@ -13,9 +13,11 @@ const methodSchema = new SimpleSchema({
   "group": String,
   "handling": Number,
   "isEnabled": Boolean,
+  "isTaxable": Boolean,
   "label": String,
   "name": String,
-  "rate": Number
+  "rate": Number,
+  "taxCode": String
 });
 
 export default methodSchema;

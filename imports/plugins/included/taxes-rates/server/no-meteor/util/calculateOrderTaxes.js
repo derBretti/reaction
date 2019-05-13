@@ -1,6 +1,8 @@
 import Random from "@reactioncommerce/random";
 import calculateItemTaxes from "./calculateItemTaxes";
+import calculateShippingTaxes from "./calculateShippingTaxes";
 import isTaxIncluded from "./isTaxIncluded";
+import taxesForShop from "./taxesForShop";
 
 const TAX_SERVICE_NAME = "custom-rates";
 
@@ -11,20 +13,25 @@ const TAX_SERVICE_NAME = "custom-rates";
  * @returns {Object|null} Calculated tax information, in `TaxServiceResult` schema, or `null` if can't calculate
  */
 export default async function calculateOrderTaxes({ context, order }) {
-  const { fulfillmentPrices, items, originAddress, shippingAddress, shopId } = order;
+  const { fulfillmentPrices, items, originAddress, fulfillmentMethod, shippingAddress, shopId } = order;
 
   if (!shippingAddress && !originAddress) return null;
 
   const includeTaxInItemPrice = await isTaxIncluded(context.collections, shopId);
 
+  const allTaxes = await taxesForShop(context.collections, { originAddress, shippingAddress, shopId });
+
   // calculate line item taxes
-  const itemTaxes = await calculateItemTaxes(context, order);
+  const itemTaxes = await calculateItemTaxes(allTaxes, items);
+
+  // calculate taxes for shipping
+  const shippingTaxes = fulfillmentMethod ? await calculateShippingTaxes(allTaxes, [fulfillmentMethod]) : [];
 
   let totalTaxableAmount = 0;
   let totalTax = 0;
   const groupTaxes = {};
 
-  itemTaxes.forEach((itemTax) => {
+  [...itemTaxes, ...shippingTaxes].forEach((itemTax) => {
     const { tax, taxableAmount, taxes } = itemTax;
     // Update the group taxes list
     taxes.forEach((taxDef) => {

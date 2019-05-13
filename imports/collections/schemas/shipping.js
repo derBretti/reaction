@@ -87,6 +87,10 @@ export const ShippingMethod = new SimpleSchema({
     defaultValue: 0,
     min: 0
   },
+  "isTaxable": {
+    type: Boolean,
+    label: "Taxable"
+  },
   "rate": {
     type: Number,
     label: "Rate",
@@ -96,6 +100,11 @@ export const ShippingMethod = new SimpleSchema({
     type: Boolean,
     label: "Enabled",
     defaultValue: false
+  },
+  "taxCode": {
+    type: String,
+    label: "Tax code",
+    optional: true
   },
   "validRanges": {
     type: Array,

@@ -66,6 +66,27 @@ export const CommonOrderItem = new SimpleSchema({
   }
 });
 
+export const CommonOrderFulfillmentMethod = new SimpleSchema({
+  _id: String,
+  isTaxable: {
+    type: Boolean
+  },
+  rate: {
+    type: Number,
+    min: 0
+  },
+  handling: {
+    type: Number,
+    optional: true,
+    defaultValue: 0,
+    min: 0
+  },
+  taxCode: {
+    type: String,
+    optional: true
+  }
+});
+
 const CommonOrderFulfillmentPrices = new SimpleSchema({
   handling: {
     type: Money,
@@ -128,6 +149,10 @@ export const CommonOrder = new SimpleSchema({
     optional: true
   },
   currencyCode: String,
+  fulfillmentMethod: {
+    type: CommonOrderFulfillmentMethod,
+    optional: true
+  },
   fulfillmentMethodId: {
     type: String,
     optional: true

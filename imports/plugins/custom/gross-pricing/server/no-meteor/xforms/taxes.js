@@ -1,7 +1,7 @@
 import { xformPricingArray } from "@reactioncommerce/reaction-graphql-xforms/product";
 import getDisplayPrice from "/imports/plugins/included/simple-pricing/server/no-meteor/util/getDisplayPrice";
 import taxesForShop from "/imports/plugins/included/taxes-rates/server/no-meteor/util/taxesForShop";
-import { taxesForItem } from "/imports/plugins/included/taxes-rates/server/no-meteor/util/calculateItemTaxes";
+import taxesForItem from "/imports/plugins/included/taxes-rates/server/no-meteor/util/taxesForItem";
 import isTaxIncluded from "/imports/plugins/included/taxes-rates/server/no-meteor/util/isTaxIncluded";
 
 function getMaxMinPrices (product, maxMinPricing = {

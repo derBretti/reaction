@@ -35,6 +35,9 @@ type FlatRateFulfillmentMethod implements Node {
   "Include this as a fulfillment option shown to shoppers during checkout?"
   isEnabled: Boolean!
 
+  "Should taxes be applied?"
+  isTaxable: Boolean
+
   "The name of this method, for display in the user interface"
   label: String!
 
@@ -43,6 +46,9 @@ type FlatRateFulfillmentMethod implements Node {
 
   "A fixed price to charge for fulfillment costs when this fulfillment method is selected for an order"
   rate: Float!
+
+  "Tax code for taxing fulfillment"
+  taxCode: String
 }
 
 ####
@@ -68,6 +74,9 @@ input FlatRateFulfillmentMethodInput {
   "Include this as a fulfillment option shown to shoppers during checkout?"
   isEnabled: Boolean!
 
+  "Should taxes be applied?"
+  isTaxable: Boolean
+
   "The name of this method, for display in the user interface"
   label: String!
 
@@ -76,6 +85,9 @@ input FlatRateFulfillmentMethodInput {
 
   "A fixed price to charge for fulfillment costs when this fulfillment method is selected for an order"
   rate: Float!
+
+  "Tax code for taxing fulfillment"
+  taxCode: String
 }
 
 "Input for the `createFlatRateFulfillmentMethod` mutation"
