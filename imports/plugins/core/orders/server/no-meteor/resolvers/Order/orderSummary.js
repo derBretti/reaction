@@ -10,9 +10,9 @@ import { xformRateToRateObject } from "@reactioncommerce/reaction-graphql-xforms
  * @return {Object} An object containing order pricing information from all fulfillmentGroups
  */
 export default async function orderSummary(context, order) {
+  const { getFunctionsOfType } = context;
   const { currencyCode, shipping: fulfillmentMethods } = order;
   const totalDiscounts = [];
-  const totalNetAmount = [];
   const totalShipping = [];
   const totalSubtotal = [];
   const totalSurcharges = [];
@@ -22,10 +22,9 @@ export default async function orderSummary(context, order) {
 
   // Loop over each fulfillmentGroup (shipping[]), and push all values into `totalX` array
   fulfillmentMethods.forEach((fulfillmentMethod) => {
-    const { invoice: { discounts, netAmount, shipping, subtotal, surcharges, taxableAmount, taxes, total } } = fulfillmentMethod;
+    const { invoice: { discounts, shipping, subtotal, surcharges, taxableAmount, taxes, total } } = fulfillmentMethod;
 
     totalDiscounts.push(discounts);
-    totalNetAmount.push(netAmount);
     totalShipping.push(shipping);
     totalSubtotal.push(subtotal);
     totalSurcharges.push(surcharges);
@@ -36,12 +35,6 @@ export default async function orderSummary(context, order) {
 
   // Reduce each `totalX` array to get order total from all fulfillmentGroups
   const totalDiscountsAmount = totalDiscounts.reduce((acc, value) => acc + value, 0);
-  const totalNetTotal = totalNetAmount.reduce((acc, value) => {
-    if (acc === null) {
-      return value;
-    }
-    return acc + value;
-  }, null);
   const totalShippingAmount = totalShipping.reduce((acc, value) => acc + value, 0);
   const totalSubtotalAmount = totalSubtotal.reduce((acc, value) => acc + value, 0);
   const totalSurchargesAmount = totalSurcharges.reduce((acc, value) => acc + value, 0);
@@ -52,7 +45,7 @@ export default async function orderSummary(context, order) {
   // Calculate effective tax rate of combined fulfillmentGroups
   const effectiveTaxRate = totalTaxableAmountAmount > 0 ? totalTaxesAmount / totalTaxableAmountAmount : 0;
 
-  return {
+  const xformedOrderSummary = {
     discountTotal: {
       amount: totalDiscountsAmount,
       currencyCode
@@ -64,10 +57,6 @@ export default async function orderSummary(context, order) {
     },
     itemTotal: {
       amount: totalSubtotalAmount,
-      currencyCode
-    },
-    netTotal: {
-      amount: totalNetTotal,
       currencyCode
     },
     surchargeTotal: {
@@ -87,4 +76,8 @@ export default async function orderSummary(context, order) {
       currencyCode
     }
   };
+  for (const mutateSummary of getFunctionsOfType("xformOrderSummary")) {
+    mutateSummary(context, order, xformedOrderSummary);
+  }
+  return xformedOrderSummary;
 }

@@ -5,6 +5,7 @@ import {
   OrderFulfillmentGroup,
   OrderItem,
   ProductVariant,
+  ShippingMethod,
   SelectedFulfillmentOption,
   VariantBaseSchema
 } from "/imports/collections/schemas";
@@ -109,15 +110,40 @@ const variantSchemaExtension = {
   }
 };
 
+ShippingMethod.extend({
+  tax: {
+    type: Number,
+    optional: true
+  },
+  taxableAmount: {
+    type: Number,
+    optional: true
+  }
+});
+
+
 SelectedFulfillmentOption.extend({
-  isTaxable: {
+  "isTaxable": {
     type: Boolean,
     optional: true
   },
-  taxCode: {
+  "tax": {
+    type: Number,
+    optional: true
+  },
+  "taxableAmount": {
+    type: Number,
+    optional: true
+  },
+  "taxCode": {
     type: String,
     optional: true
-  }
+  },
+  "taxes": {
+    type: Array,
+    optional: true
+  },
+  "taxes.$": Taxes
 });
 
 VariantBaseSchema.extend(variantSchemaExtension);

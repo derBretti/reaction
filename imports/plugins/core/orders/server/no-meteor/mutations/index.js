@@ -6,6 +6,7 @@ import sendOrderEmail from "./sendOrderEmail";
 import splitOrderItem from "./splitOrderItem";
 import updateOrder from "./updateOrder";
 import updateOrderFulfillmentGroup from "./updateOrderFulfillmentGroup";
+import xformFulfillmentMethodToShipmentMethod from "./xformFulfillmentMethodToShipmentMethod";
 
 export default {
   addOrderFulfillmentGroup,
@@ -15,5 +16,6 @@ export default {
   sendOrderEmail,
   splitOrderItem,
   updateOrder,
-  updateOrderFulfillmentGroup
+  updateOrderFulfillmentGroup,
+  xformFulfillmentMethodToShipmentMethod
 };

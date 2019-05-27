@@ -8,6 +8,11 @@ import queries from "./server/no-meteor/queries";
 import resolvers from "./server/no-meteor/resolvers";
 import schemas from "./server/no-meteor/schemas";
 import startup from "./server/no-meteor/startup";
+import addInvoiceToGroup from "./server/no-meteor/util/addInvoiceToGroup";
+import xformCartCheckout from "./server/no-meteor/util/xformCartCheckout";
+import xformFulfillmentGroup from "./server/no-meteor/util/xformFulfillmentGroup";
+import xformFulfillmentGroupToSummary from "./server/no-meteor/util/xformFulfillmentGroupToSummary";
+import xformOrderSummary from "./server/no-meteor/util/xformOrderSummary";
 
 Reaction.registerPackage({
   label: "Taxes",
@@ -18,10 +23,15 @@ Reaction.registerPackage({
     publishedProductVariantFields: ["isTaxable", "taxCode", "taxDescription"]
   },
   functionsByType: {
+    addInvoiceToGroup: [addInvoiceToGroup],
     mutateNewOrderItemBeforeCreate: [mutateNewOrderItemBeforeCreate],
     mutateNewVariantBeforeCreate: [mutateNewVariantBeforeCreate],
     publishProductToCatalog: [publishProductToCatalog],
     registerPluginHandler: [registerPluginHandler],
+    xformCartCheckout: [xformCartCheckout],
+    xformFulfillmentGroupToSummary: [xformFulfillmentGroupToSummary],
+    xformFulfillmentGroup: [xformFulfillmentGroup],
+    xformOrderSummary: [xformOrderSummary],
     startup: [startup]
   },
   graphQL: {

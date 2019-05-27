@@ -9,5 +9,5 @@ import { xformCartCheckout } from "@reactioncommerce/reaction-graphql-xforms/car
  * @return {Promise<Object>} A connection object
  */
 export default async function checkout(cart, connectionArgs, context) {
-  return xformCartCheckout(context.collections, cart);
+  return xformCartCheckout(context, cart);
 }

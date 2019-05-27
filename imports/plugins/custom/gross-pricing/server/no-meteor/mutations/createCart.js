@@ -1,6 +1,6 @@
 import { Cart as CartSchema } from "/imports/collections/schemas";
 import getUpdatedCartItems from "/imports/plugins/core/taxes/server/no-meteor/util/getUpdatedCartItems";
-import isTaxIncluded from "/imports/plugins/included/taxes-rates/server/no-meteor/util/isTaxIncluded";
+import isTaxIncluded from "/imports/plugins/core/taxes/server/no-meteor/util/isTaxIncluded";
 import cartCreateCart from "/imports/plugins/core/cart/server/no-meteor/mutations/createCart";
 import taxAddress  from "../xforms/taxAddress";
 

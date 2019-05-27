@@ -1,5 +1,5 @@
 import taxesGetFulfillmentGroupTaxes from "/imports/plugins/core/taxes/server/no-meteor/mutations/getFulfillmentGroupTaxes";
-import isTaxIncluded from "/imports/plugins/included/taxes-rates/server/no-meteor/util/isTaxIncluded";
+import isTaxIncluded from "/imports/plugins/core/taxes/server/no-meteor/util/isTaxIncluded";
 import taxAddress  from "../xforms/taxAddress";
 
 /**
@@ -7,7 +7,6 @@ import taxAddress  from "../xforms/taxAddress";
  *   tax calculation service for the actual calculations.
  * @param {Object} context App context
  * @param {Sting} accountId An account id
- * @param {Object} billingAddress Billing address
  * @param {Object} order Relevant information about an order. This is similar to an OrderFulfillmentGroup type.
  * @param {Boolean} forceZeroes Set to `true` to force tax properties to be added
  *   and set to 0 when no tax plugin is enabled. When calculating tax for a cart, this should be false.
@@ -16,8 +15,8 @@ import taxAddress  from "../xforms/taxAddress";
  *   as well as `itemTaxes` array property with `itemId`, `tax`, `taxableAmount`,
  *   and `taxes` properties on each array item.
  */
-export default async function getFulfillmentGroupTaxes(context, { accountId, billingAddress, order, forceZeroes }) {
-  const { shopId } = order;
+export default async function getFulfillmentGroupTaxes(context, { accountId, order, forceZeroes }) {
+  const { billingAddress, shopId } = order;
 
   // use fallback address in order
   if (!order.shippingAddress) {

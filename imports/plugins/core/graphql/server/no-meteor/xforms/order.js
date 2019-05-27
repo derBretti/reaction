@@ -61,11 +61,13 @@ export function xformOrderPayment(payment) {
 
 /**
  * @summary Transform a single fulfillment group fulfillment option
+ * @param {Object} context - an object containing the per-request state
  * @param {Object} fulfillmentOption The group.shipmentMethod
  * @returns {Object} Transformed fulfillment option
  */
-export function xformOrderFulfillmentGroupSelectedOption(fulfillmentOption) {
-  return {
+export async function xformOrderFulfillmentGroupSelectedOption(context, fulfillmentOption) {
+  const { getFunctionsOfType } = context;
+  const xFormedCheckoutFulfillmentOption = {
     fulfillmentMethod: {
       _id: fulfillmentOption._id,
       carrier: fulfillmentOption.carrier || null,
@@ -84,6 +86,11 @@ export function xformOrderFulfillmentGroupSelectedOption(fulfillmentOption) {
       currencyCode: fulfillmentOption.currencyCode
     }
   };
+
+  for (const mutateFulfillmentGroup of getFunctionsOfType("xformFulfillmentGroup")) {
+    await mutateFulfillmentGroup(context, fulfillmentOption, xFormedCheckoutFulfillmentOption); // eslint-disable-line no-await-in-loop
+  }
+  return xFormedCheckoutFulfillmentOption;
 }
 
 /**

@@ -1,4 +1,3 @@
-import addInvoiceToGroup from "./addInvoiceToGroup";
 import addShipmentMethodToGroup from "./addShipmentMethodToGroup";
 import addTaxesToGroup from "./addTaxesToGroup";
 import compareExpectedAndActualTotals from "./compareExpectedAndActualTotals";
@@ -29,6 +28,7 @@ export default async function updateGroupTotals(context, {
   orderId,
   selectedFulfillmentMethodId
 }) {
+  const { getFunctionsOfType } = context;
   // Apply shipment method
   await addShipmentMethodToGroup(context, {
     billingAddress,
@@ -40,10 +40,7 @@ export default async function updateGroupTotals(context, {
     selectedFulfillmentMethodId
   });
 
-  const {
-    groupSurcharges,
-    groupSurchargeTotal
-  } = await getSurchargesForGroup(context, {
+  const surcharges = await getSurchargesForGroup(context, {
     billingAddress,
     cartId,
     currencyCode,
@@ -54,7 +51,7 @@ export default async function updateGroupTotals(context, {
   });
 
   // Calculate and set taxes. Mutates group object in addition to returning the totals.
-  const { taxTotal, taxableAmount } = await addTaxesToGroup(context, {
+  const taxes = await addTaxesToGroup(context, {
     billingAddress,
     cartId,
     currencyCode,
@@ -64,14 +61,15 @@ export default async function updateGroupTotals(context, {
   });
 
   // Build and set the group invoice
-  addInvoiceToGroup({
-    currencyCode,
-    group,
-    groupDiscountTotal: discountTotal,
-    groupSurchargeTotal,
-    taxableAmount,
-    taxTotal
-  });
+  for (const mutateInvoice of getFunctionsOfType("addInvoiceToGroup")) {
+    mutateInvoice({
+      currencyCode,
+      group,
+      groupDiscountTotal: discountTotal,
+      ...surcharges,
+      ...taxes
+    });
+  }
 
   if (expectedGroupTotal) {
     // For now we expect that the client has NOT included discounts in the expected total it sent.
@@ -88,9 +86,7 @@ export default async function updateGroupTotals(context, {
   }
 
   return {
-    groupSurcharges,
-    groupSurchargeTotal,
-    taxableAmount,
-    taxTotal
+    ...surcharges,
+    ...taxes
   };
 }

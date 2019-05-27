@@ -96,5 +96,6 @@ export const TaxServiceItemTax = new SimpleSchema({
 
 export const TaxServiceResult = new SimpleSchema({
   itemTaxes: [TaxServiceItemTax],
+  shippingTaxes: [TaxServiceItemTax],
   taxSummary: TaxSummary
 });

@@ -1,4 +1,5 @@
 import xformCartGroupToCommonOrder from "/imports/plugins/core/cart/server/no-meteor/util/xformCartGroupToCommonOrder";
+import addTaxToItem from "./addTaxToItem";
 
 /**
  * @summary Returns `cart.items` with tax-related props updated on them
@@ -17,15 +18,7 @@ export default async function getUpdatedCartItems(context, cart) {
   const cartItems = (cart.items || []).map((item) => {
     const newItem = { ...item };
     taxResultsByGroup.forEach((group) => {
-      const matchingGroupTaxes = group.itemTaxes.find((groupItem) => groupItem.itemId === item._id);
-      if (matchingGroupTaxes) {
-        newItem.tax = matchingGroupTaxes.tax;
-        newItem.taxableAmount = matchingGroupTaxes.taxableAmount;
-        newItem.taxes = matchingGroupTaxes.taxes;
-        if (matchingGroupTaxes.customFields) {
-          newItem.customTaxFields = matchingGroupTaxes.customFields;
-        }
-      }
+      addTaxToItem(group.itemTaxes, newItem);
     });
     return newItem;
   });

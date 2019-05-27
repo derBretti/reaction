@@ -1,5 +1,5 @@
 import findProductAndVariant from "/imports/plugins/core/catalog/server/no-meteor/utils/findProductAndVariant";
-import isTaxIncluded from "/imports/plugins/included/taxes-rates/server/no-meteor/util/isTaxIncluded";
+import isTaxIncluded from "/imports/plugins/core/taxes/server/no-meteor/util/isTaxIncluded";
 import taxesForShop from "/imports/plugins/included/taxes-rates/server/no-meteor/util/taxesForShop";
 import { getGrossPrice } from "../xforms/taxes";
 

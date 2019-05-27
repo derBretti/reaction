@@ -1,5 +1,5 @@
 import ReactionError from "@reactioncommerce/reaction-error";
-import isTaxIncluded from "/imports/plugins/included/taxes-rates/server/no-meteor/util/isTaxIncluded";
+import isTaxIncluded from "/imports/plugins/core/taxes/server/no-meteor/util/isTaxIncluded";
 import taxAddress  from "../xforms/taxAddress";
 import { calculateGrossPricing }  from "../xforms/taxes";
 

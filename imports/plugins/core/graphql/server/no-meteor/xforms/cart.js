@@ -184,11 +184,12 @@ function xformCartFulfillmentGroup(fulfillmentGroup, cart) {
 }
 
 /**
- * @param {Object} collections Map of Mongo collections
+ * @param {Object} context - an object containing the per-request state
  * @param {Object} cart Cart document
  * @returns {Object} Checkout object
  */
-export async function xformCartCheckout(collections, cart) {
+export async function xformCartCheckout(context, cart) {
+  const { getFunctionsOfType } = context;
   // itemTotal is qty * amount for each item, summed
   const itemTotal = (cart.items || []).reduce((sum, item) => (sum + item.subtotal.amount), 0);
 
@@ -220,10 +221,9 @@ export async function xformCartCheckout(collections, cart) {
   // so that we can set to null and break if we hit a not-yet-calculated item.
   let taxTotal = null;
   let taxableAmount = null;
-  let netAmount = null;
   const { taxSummary } = cart;
   if (taxSummary) {
-    ({ netAmount, tax: taxTotal, taxableAmount } = taxSummary);
+    ({ tax: taxTotal, taxableAmount } = taxSummary);
   }
 
   const discountTotal = cart.discount || 0;
@@ -243,7 +243,6 @@ export async function xformCartCheckout(collections, cart) {
 
   let taxTotalMoneyObject = null;
   let effectiveTaxRateObject = null;
-  let netTotalMoneyObject = null;
   if (taxTotal !== null) {
     taxTotalMoneyObject = {
       amount: taxTotal,
@@ -254,17 +253,11 @@ export async function xformCartCheckout(collections, cart) {
       effectiveTaxRateObject = xformRateToRateObject(effectiveTaxRate);
     }
   }
-  if (netAmount !== null) {
-    netTotalMoneyObject = {
-      amount: netAmount,
-      currencyCode: cart.currencyCode
-    };
-  }
 
   fulfillmentGroups = fulfillmentGroups.map((fulfillmentGroup) => xformCartFulfillmentGroup(fulfillmentGroup, cart));
   fulfillmentGroups = fulfillmentGroups.filter((group) => !!group); // filter out nulls
 
-  return {
+  const xFormedCheckout = {
     fulfillmentGroups,
     summary: {
       discountTotal: {
@@ -277,7 +270,6 @@ export async function xformCartCheckout(collections, cart) {
         amount: itemTotal,
         currencyCode: cart.currencyCode
       },
-      netTotal: netTotalMoneyObject,
       taxableAmount: {
         amount: taxableAmount,
         currencyCode: cart.currencyCode
@@ -293,6 +285,12 @@ export async function xformCartCheckout(collections, cart) {
       }
     }
   };
+
+  for (const mutateCheckout of getFunctionsOfType("xformCartCheckout")) {
+    await mutateCheckout(context, cart, xFormedCheckout); // eslint-disable-line no-await-in-loop
+  }
+
+  return xFormedCheckout;
 }
 
 /**

@@ -5,6 +5,7 @@ import resolvers from "./server/no-meteor/resolvers";
 import schemas from "./server/no-meteor/schemas";
 import startup from "./server/no-meteor/startup";
 import getDataForOrderEmail from "./server/no-meteor/util/getDataForOrderEmail";
+import addInvoiceToGroup from "./server/no-meteor/util/addInvoiceToGroup";
 
 Reaction.registerPackage({
   label: "Orders",
@@ -12,6 +13,7 @@ Reaction.registerPackage({
   icon: "fa fa-sun-o",
   autoEnable: true,
   functionsByType: {
+    addInvoiceToGroup: [addInvoiceToGroup],
     getDataForOrderEmail: [getDataForOrderEmail],
     startup: [startup]
   },

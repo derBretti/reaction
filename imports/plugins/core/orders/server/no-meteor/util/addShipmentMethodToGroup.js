@@ -22,7 +22,7 @@ export default async function addShipmentMethodToGroup(context, {
   orderId,
   selectedFulfillmentMethodId
 }) {
-  const { collections, queries } = context;
+  const { collections, mutations, queries } = context;
 
   const commonOrder = await xformOrderGroupToCommonOrder({
     billingAddress,
@@ -48,16 +48,13 @@ export default async function addShipmentMethodToGroup(context, {
       " Fetch updated fulfillment options and try creating the order again with a valid method.");
   }
 
-  group.shipmentMethod = {
-    _id: selectedFulfillmentMethod.method._id,
-    carrier: selectedFulfillmentMethod.method.carrier,
+  group.shipmentMethod = mutations.xformFulfillmentMethodToShipmentMethod(context, {
+    billingAddress,
+    cartId,
     currencyCode,
-    label: selectedFulfillmentMethod.method.label,
-    group: selectedFulfillmentMethod.method.group,
-    name: selectedFulfillmentMethod.method.name,
-    handling: selectedFulfillmentMethod.handlingPrice,
-    isTaxable: selectedFulfillmentMethod.method.isTaxable,
-    rate: selectedFulfillmentMethod.shippingPrice,
-    taxCode: selectedFulfillmentMethod.method.taxCode
-  };
+    discountTotal,
+    group,
+    orderId,
+    selectedFulfillmentMethodId
+  }, selectedFulfillmentMethod);
 }

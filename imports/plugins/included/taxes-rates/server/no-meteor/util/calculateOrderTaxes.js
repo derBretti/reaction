@@ -1,7 +1,7 @@
 import Random from "@reactioncommerce/random";
 import calculateItemTaxes from "./calculateItemTaxes";
 import calculateShippingTaxes from "./calculateShippingTaxes";
-import isTaxIncluded from "./isTaxIncluded";
+import isTaxIncluded from "/imports/plugins/core/taxes/server/no-meteor/util/isTaxIncluded";
 import taxesForShop from "./taxesForShop";
 
 const TAX_SERVICE_NAME = "custom-rates";
@@ -62,6 +62,7 @@ export default async function calculateOrderTaxes({ context, order }) {
   }
 
   return {
+    shippingTaxes,
     itemTaxes,
     taxSummary: {
       calculatedAt: new Date(),
