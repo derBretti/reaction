@@ -12,7 +12,19 @@ export const Taxes = new SimpleSchema({
     blackbox: true,
     optional: true
   },
+  country: {
+    type: String,
+    optional: true
+  },
   jurisdictionId: {
+    type: String,
+    optional: true
+  },
+  region: {
+    type: String,
+    optional: true
+  },
+  postal: {
     type: String,
     optional: true
   },

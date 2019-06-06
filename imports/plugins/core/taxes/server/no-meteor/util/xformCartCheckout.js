@@ -1,8 +1,12 @@
+import { xformRateToRateObject } from "@reactioncommerce/reaction-graphql-xforms/core";
 import isTaxIncluded from "./isTaxIncluded";
 import calculateGrossShipment from "./calculateGrossShipment";
 
 /**
- * 
+ * @summary Transforms fulfillmentOption using `calculateGrossShipment`
+ * @param {Object} option shipmentQuote
+ * @param {Object} method shipmentMethod
+ * @param {Object} currencyCode currencyCode
  */
 function xformFulfillmentOption(option, method, currencyCode) {
   return {
@@ -42,7 +46,7 @@ export default async function xformCartCheckout(context, cart, checkout) {
     const { taxSummary, currencyCode } = cart;
     // include taxes in itemTotal
     if (checkout.summary.itemTotal) {
-      const itemTotal = (cart.items || []).reduce((sum, item) => (sum + item.subtotal.amount + item.tax), 0);
+      const itemTotal = (cart.items || []).reduce((sum, item) => (sum + item.subtotal.amount + (item.tax ? item.tax : 0)), 0);
       checkout.summary.itemTotal.amount = itemTotal;
     }
 
@@ -89,10 +93,24 @@ export default async function xformCartCheckout(context, cart, checkout) {
     // TODO handle discounts
 
     if (taxSummary) {
-      let netAmount = null;
-      ({ netAmount } = taxSummary);
+      const { netAmount, taxes } = taxSummary;
+      // add taxes
+      if (taxes !== null) {
+        checkout.summary.taxes = taxes.map((calculatedTax) => ({
+          ...calculatedTax,
+          tax: {
+            currencyCode,
+            amount: calculatedTax.tax
+          },
+          taxableAmount: {
+            currencyCode,
+            amount: calculatedTax.taxableAmount
+          },
+          taxRate: xformRateToRateObject(calculatedTax.taxRate)
+        }));
+      }
       // add netTotal or null
-      if (netAmount !== null) {
+      if (netAmount !== undefined && netAmount !== null) {
         netTotalMoneyObject = {
           amount: netAmount,
           currencyCode: cart.currencyCode

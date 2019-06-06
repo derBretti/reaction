@@ -19,7 +19,10 @@ export default function taxesForItem(allTaxes, { amount, taxCode }) {
       }
       return {
         _id: Random.id(),
+        country: taxDef.country,
         jurisdictionId: taxDef._id,
+        postal: taxDef.postal,
+        region: taxDef.region,
         sourcing: taxDef.taxLocale,
         tax,
         taxableAmount: amount,
