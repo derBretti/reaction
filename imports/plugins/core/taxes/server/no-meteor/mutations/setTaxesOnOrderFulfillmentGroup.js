@@ -9,12 +9,15 @@ import addTaxToItem from "../util/addTaxToItem";
  */
 export default async function setTaxesOnOrderFulfillmentGroup(context, { group, commonOrder }) {
   const { itemTaxes, shippingTaxes, taxSummary } = await context.mutations.getFulfillmentGroupTaxes(context, { order: commonOrder, forceZeroes: true });
+  // let itemsTaxTotal = 0;
   group.items.map((item) => addTaxToItem(itemTaxes, item));
   addTaxToItem(shippingTaxes, group.shipmentMethod);
 
   group.taxSummary = taxSummary;
 
   return {
+    // itemsTaxTotal,
+    // shippingTaxTotal,
     taxableAmount: taxSummary.taxableAmount,
     taxTotal: taxSummary.tax
   };
