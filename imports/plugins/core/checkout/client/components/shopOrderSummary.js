@@ -16,11 +16,16 @@ class ShopOrderSummary extends Component {
     shipping: PropTypes.number.isRequired,
     shopName: PropTypes.string.isRequired,
     subTotal: PropTypes.number.isRequired,
-    taxes: PropTypes.number.isRequired
+    tax: PropTypes.number.isRequired,
+    taxes: PropTypes.arrayOf(PropTypes.shape({
+      country: PropTypes.string,
+      region: PropTypes.string,
+      postal: PropTypes.string
+    }))
   };
 
   render() {
-    const { netAmount, quantityTotal, shipping, shopName, subTotal, taxes } = this.props;
+    const { netAmount, quantityTotal, shipping, shopName, subTotal, tax, taxes } = this.props;
 
     return (
       <div className="order-details-info-box-content">
@@ -64,13 +69,24 @@ class ShopOrderSummary extends Component {
             </div>
           </div>
         }
-        {taxes > 0 &&
+        {taxes !== undefined && taxes !== null && taxes.map((calculatedTax) => (
+          <div className="order-summary-line">
+            <div className="order-summary-title">
+              <Components.Translation defaultValue="Tax" i18nKey={"cartCompleted.orderTax"}/>
+              {calculatedTax.country && `(${calculatedTax.country}`}{calculatedTax.region && `, ${calculatedTax.region}`}{calculatedTax.postal && `, ${calculatedTax.postal}`}{calculatedTax.country && ")"}
+            </div>
+            <div className="order-summary-value">
+              <Components.Currency amount={calculatedTax.tax}/>
+            </div>
+          </div>
+        ))}
+        {!taxes && tax > 0 &&
           <div className="order-summary-line">
             <div className="order-summary-title">
               <Components.Translation defaultValue="Tax" i18nKey={"cartCompleted.orderTax"}/>
             </div>
             <div className="order-summary-value">
-              <Components.Currency amount={taxes}/>
+              <Components.Currency amount={tax}/>
             </div>
           </div>
         }

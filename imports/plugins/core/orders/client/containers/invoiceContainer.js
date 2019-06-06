@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import _ from "lodash";
 import { Meteor } from "meteor/meteor";
 import { i18next, Logger, Reaction } from "/client/api";
-import { Orders } from "/lib/collections";
+import { Orders, Packages } from "/lib/collections";
 import { getPrimaryMediaForItem } from "/lib/api";
 import getOpaqueIds from "/imports/plugins/core/core/client/util/getOpaqueIds";
 import formatMoney from "/imports/utils/formatMoney";
@@ -16,6 +16,7 @@ import { captureOrderPayments } from "../graphql";
 class InvoiceContainer extends Component {
   static propTypes = {
     invoice: PropTypes.object,
+    isTaxIncluded: PropTypes.bool,
     order: PropTypes.object,
     uniqueItems: PropTypes.array
   }
@@ -73,6 +74,46 @@ class InvoiceContainer extends Component {
     this._isMounted = false;
   }
 
+  getShipmentPrice = (shipmentMethod) => {
+    let netPrice = null;
+    let price;
+    if (this.props.isTaxIncluded) {
+      netPrice = shipmentMethod.rate + shipmentMethod.handling;
+      if (shipmentMethod.tax) {
+        price = netPrice + shipmentMethod.tax;
+      } else {
+        price = netPrice;
+      }
+    } else {
+      price = shipmentMethod.rate + shipmentMethod.handling;
+    }
+    return { netPrice, price };
+  }
+
+  getItemPrice = (uniqueItem, quantity) => {
+    let netPrice = null;
+    let price;
+    if (this.props.isTaxIncluded) {
+      netPrice = uniqueItem.price.amount;
+      price = uniqueItem.price.amount + (uniqueItem.tax / quantity);
+    } else {
+      price = uniqueItem.price.amount;
+    }
+    return { netPrice, price };
+  }
+
+  getSubtotal = (uniqueItem) => {
+    let netPrice = null;
+    let price;
+    if (this.props.isTaxIncluded) {
+      price = uniqueItem.subtotal + uniqueItem.tax;
+      netPrice = uniqueItem.subtotal;
+    } else {
+      price = uniqueItem.subtotal;
+    }
+    return { netPrice, price };
+  }
+
   handlePopOverOpen = (event) => {
     event.preventDefault();
     this.setState({
@@ -89,7 +130,7 @@ class InvoiceContainer extends Component {
     });
   };
 
-  handleItemSelect = (lineItem) => {
+  handleItemSelect = (lineItem, isShipment) => {
     let { editedItems, selectedItems } = this.state;
 
     // if item is not in the selectedItems array
@@ -100,19 +141,21 @@ class InvoiceContainer extends Component {
       // Add every quantity in the row to be refunded
       const isEdited = editedItems.find((item) => item.id === lineItem._id);
 
-      const adjustedQuantity = lineItem.quantity - this.state.value;
-
       if (isEdited) {
+        const adjustedQuantity = isShipment ? 0 : (lineItem.quantity - this.state.value);
+        const { price } = isShipment ? 0 : this.getItemPrice(lineItem, adjustedQuantity) * adjustedQuantity;
         editedItems = editedItems.filter((item) => item.id !== lineItem._id);
-        isEdited.refundedTotal = lineItem.price.amount * adjustedQuantity;
+        isEdited.refundedTotal = price;
         isEdited.refundedQuantity = adjustedQuantity;
         editedItems.push(isEdited);
       } else {
+        const quantity = isShipment ? 1 : lineItem.quantity;
+        const { price } = isShipment ? this.getShipmentPrice(lineItem) : this.getItemPrice(lineItem, quantity) * quantity;
         editedItems.push({
           id: lineItem._id,
           title: lineItem.title,
-          refundedTotal: lineItem.price.amount * lineItem.quantity,
-          refundedQuantity: lineItem.quantity
+          refundedTotal: price,
+          refundedQuantity: quantity
         });
       }
     } else {
@@ -148,10 +191,11 @@ class InvoiceContainer extends Component {
 
       const itemIds = uniqueItems.map((item) => {
         // on select all refunded quantity should be all existing items
+        const { price } = this.getItemPrice(item, item.quantity);
         updateEditedItems.push({
           id: item._id,
           title: item.title,
-          refundedTotal: item.price.amount * item.quantity,
+          refundedTotal: price * item.quantity,
           refundedQuantity: item.quantity
         });
         return item._id;
@@ -171,10 +215,10 @@ class InvoiceContainer extends Component {
     const isEdited = editedItems.find((item) => item.id === lineItem._id);
 
     const refundedQuantity = lineItem.quantity - value;
-
+    const { price } = this.getItemPrice(lineItem, refundedQuantity);
     if (isEdited) {
       editedItems = editedItems.filter((item) => item.id !== lineItem._id);
-      isEdited.refundedTotal = lineItem.price.amount * refundedQuantity;
+      isEdited.refundedTotal = price * refundedQuantity;
       isEdited.refundedQuantity = refundedQuantity;
       if (refundedQuantity !== 0) {
         editedItems.push(isEdited);
@@ -183,7 +227,7 @@ class InvoiceContainer extends Component {
       editedItems.push({
         id: lineItem._id,
         title: lineItem.title,
-        refundedTotal: lineItem.price.amount * refundedQuantity,
+        refundedTotal: price * refundedQuantity,
         refundedQuantity
       });
     }
@@ -423,6 +467,9 @@ class InvoiceContainer extends Component {
         clearRefunds={this.handleClearRefunds}
         displayMedia={getPrimaryMediaForItem}
         getRefundedItemsInfo={this.getRefundedItemsInfo}
+        getItemPrice = {this.getItemPrice}
+        getShipmentPrice = {this.getShipmentPrice}
+        getSubtotal = {this.getSubtotal}
         handleInputChange={this.handleInputChange}
         handleItemSelect={this.handleItemSelect}
         handlePopOverOpen={this.handlePopOverOpen}
@@ -508,18 +555,15 @@ const composer = (props, onData) => {
   const shopId = Reaction.getShopId();
 
   if (order) {
+    // check if tax should be included
+    const plugin = Packages.findOne({ name: "reaction-taxes", shopId: Reaction.getShopId() });
+    const isTaxIncluded = plugin && !!plugin.settings.includeTaxInItemPrice;
     const [payment] = order.payments || [];
     const { status: paymentStatus } = payment || {};
     const { invoice } = getShippingInfo(order);
 
     // get whether adjustments can be made
     const canMakeAdjustments = !_.includes(["approved", "completed", "refunded", "partialRefund"], paymentStatus);
-
-    // Add totalItems property to invoice
-    const invoiceWithTotalItems = {
-      ...invoice,
-      totalItems: order.totalItemQuantity
-    };
 
     // get discounts
     const apps = Reaction.Apps({ provides: "paymentMethod", enabled: true });
@@ -544,6 +588,22 @@ const composer = (props, onData) => {
       return result;
     }, []);
 
+    let { shipping, subtotal } = invoice;
+    if (isTaxIncluded) {
+      subtotal += orderItems.reduce((tax, item) => tax + item.tax, 0);
+      if (shipmentMethod.tax) {
+        shipping += shipmentMethod.tax;
+      }
+    }
+
+    // Add totalItems property to invoice
+    const invoiceWithTotalItems = {
+      ...invoice,
+      shipping,
+      subtotal,
+      totalItems: order.totalItemQuantity
+    };
+
     // print order
     const printOrder = Reaction.Router.pathFor("dashboard/pdf/orders", {
       hash: {
@@ -556,6 +616,7 @@ const composer = (props, onData) => {
       canMakeAdjustments,
       discounts,
       invoice: invoiceWithTotalItems,
+      isTaxIncluded,
       order,
       printOrder,
       uniqueItems

@@ -184,3 +184,28 @@ export function getShippingInfo(order) {
   const shippingInfo = order && order.shipping && order.shipping.find((group) => group.shopId === Reaction.getShopId());
   return shippingInfo || {};
 }
+
+/**
+ * @name taxLabel
+ * @memberof Helpers
+ * @summary Generates a label from a tax object that includes rate and jurisdiction.
+ * @param {Object} tax - A tax object
+ * @returns {String} Formatted string such as " (US, NY, 10242) 8.88%".
+ */
+export function taxLabel(tax) {
+  const { country, postal, region, taxName: name, taxRate } = tax;
+  let label = "";
+  if (country) {
+    label = `(${country}`;
+    if (region) {
+      label += ` ,${region}`;
+    }
+    if (postal) {
+      label += ` ,${postal}`;
+    }
+    label += ") ";
+  } else if (name) {
+    label = `(${name}) `;
+  }
+  return ` ${label}${taxRate && (taxRate * 100).toLocaleString()}%`;
+}

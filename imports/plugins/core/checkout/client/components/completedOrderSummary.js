@@ -24,6 +24,13 @@ class CompletedOrderSummary extends Component {
         taxes: PropTypes.number.isRequired,
         total: PropTypes.number.isRequired
       }).isRequired,
+      taxSummary: {
+        taxes: PropTypes.arrayOf(PropTypes.shape({
+          country: PropTypes.string,
+          region: PropTypes.string,
+          postal: PropTypes.string
+        }))
+      },
       items: PropTypes.arrayOf(PropTypes.shape({
         quantity: PropTypes.number.isRequired
       })),
@@ -65,7 +72,8 @@ class CompletedOrderSummary extends Component {
               shipping={group.invoice.shipping}
               shopName={group.shopName}
               subTotal={group.invoice.subtotal}
-              taxes={group.invoice.taxes}
+              tax={group.invoice.taxes}
+              taxes={group.taxSummary && group.taxSummary.taxes}
             />
           ))}
           <hr />

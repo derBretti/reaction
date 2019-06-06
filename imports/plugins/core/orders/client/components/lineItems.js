@@ -5,6 +5,7 @@ import classnames from "classnames";
 import { Roles } from "meteor/alanning:roles";
 import { formatPriceString, Reaction } from "/client/api";
 import { Components, registerComponent } from "@reactioncommerce/reaction-components";
+import { taxLabel } from "../helpers";
 
 /**
  * @file LineItems React Component for displaying the actionable data on the invoice section on the orders sideview
@@ -40,8 +41,12 @@ class LineItems extends Component {
     clearRefunds: PropTypes.func,
     displayMedia: PropTypes.func,
     editedItems: PropTypes.array,
+    fulfillment: PropTypes.object,
+    getItemPrice: PropTypes.func,
     getRefundedItemsInfo: PropTypes.func,
     getSelectedItemsInfo: PropTypes.func,
+    getShipmentPrice: PropTypes.func,
+    getSubtotal: PropTypes.func,
     handleInputChange: PropTypes.func,
     handleItemSelect: PropTypes.func,
     handlePopOverOpen: PropTypes.func,
@@ -69,6 +74,7 @@ class LineItems extends Component {
   }
 
   renderLineItem(uniqueItem) {
+    const { netPrice, price } = this.props.getItemPrice(uniqueItem, uniqueItem.quantity);
     return (
       <div className="order-items invoice-item">
         <div
@@ -92,7 +98,8 @@ class LineItems extends Component {
 
           <div className="order-detail-price">
             <div className="invoice-details" style={{ marginRight: 15 }}>
-              <strong>{formatPriceString(uniqueItem.price.amount)}</strong>
+              <strong>{formatPriceString(price)}</strong>
+              {netPrice && <div>({formatPriceString(netPrice)})</div>}
             </div>
           </div>
 
@@ -101,7 +108,7 @@ class LineItems extends Component {
     );
   }
 
-  renderPopOverLineItem(uniqueItem) {
+  renderPopOverLineItem(uniqueItem, { netPrice, price }, isShipmentMethod) {
     const className = classnames({
       "order-items": true,
       "invoice-item": true,
@@ -113,7 +120,7 @@ class LineItems extends Component {
         <div
           className="order-item form-group order-summary-form-group"
         >
-          <div className="order-item-media popover-mode">
+          {!isShipmentMethod && <div className="order-item-media popover-mode">
             <Components.RolloverCheckbox
               className="order-invoice-rollover"
               checkboxClassName="checkbox-avatar checkbox-large"
@@ -122,15 +129,27 @@ class LineItems extends Component {
             >
               {this.displayMedia(uniqueItem)}
             </Components.RolloverCheckbox>
-          </div>
+          </div>}
+          {isShipmentMethod && <div className="order-item-media popover-mode">
+            <Components.Checkbox
+              className="checkbox-large"
+              onChange={() => this.props.handleItemSelect(uniqueItem, true)}
+              checked={this.props.selectedItems.includes(uniqueItem._id)}
+            />
+          </div>}
 
           <div className="order-item-details">
             <div className="order-detail-title">
+            {!isShipmentMethod && <>
               {uniqueItem.title} <br/><small>{uniqueItem.variantTitle}</small>
+            </>}
+            {isShipmentMethod && <>
+              <Components.Translation defaultValue="Shipping" i18nKey="cartSubTotals.shipping"/><br/><small>{uniqueItem.label}</small>
+            </>}
             </div>
           </div>
 
-          <div className="order-detail-quantity">
+          {!isShipmentMethod && <div className="order-detail-quantity">
             {!this.props.selectedItems.includes(uniqueItem._id) && uniqueItem.quantity > 0 ?
               <Components.NumberTypeInput
                 minValue={0}
@@ -140,11 +159,12 @@ class LineItems extends Component {
               /> :
               <div>0</div>
             }
-          </div>
+          </div>}
 
           <div className="order-detail-price">
             <div className="invoice-details" style={{ marginRight: 15 }}>
-              <strong>{formatPriceString(uniqueItem.price.amount)}</strong>
+              <strong>{formatPriceString(price)}</strong>
+              {netPrice && <div>({formatPriceString(netPrice)})</div>}
             </div>
           </div>
 
@@ -153,10 +173,10 @@ class LineItems extends Component {
     );
   }
 
-  renderLineItemInvoice(uniqueItem) {
+  renderLineItemInvoice(uniqueItem, { price }) {
     return (
       <div className="invoice-order-items">
-        {uniqueItem.tax &&
+        {uniqueItem.taxes && uniqueItem.taxes.map((tax) =>
           <div className="invoice-order-item-tax">
             <b>
               <Components.Translation
@@ -165,13 +185,12 @@ class LineItems extends Component {
               />
             </b>
             <div className="tax-code">
-              <span>{uniqueItem.taxCode}</span>
+              <span>{uniqueItem.taxCode}{taxLabel(tax)}</span>
             </div>
             <div className="tax-cost">
-              <span>{formatPriceString(uniqueItem.tax)}</span>
+              <span>{formatPriceString(tax.tax)}</span>
             </div>
-          </div>
-        }
+          </div>)}
         <div className="invoice-order-item-subtotal">
           <b>
             <Components.Translation
@@ -179,7 +198,7 @@ class LineItems extends Component {
               i18nKey="cartSubTotals.subtotal"
             />
           </b>
-          <span><b>{formatPriceString(uniqueItem.subtotal)}</b></span>
+          <span><b>{formatPriceString(price)}</b></span>
         </div>
       </div>
     );
@@ -205,7 +224,7 @@ class LineItems extends Component {
             {editedItems.map((item, index) => (
               <div className="refund-item" key={index}>
                 <div>
-                  <span>{item.title}</span>
+                  <span>{item.title || item.label}</span>
                 </div>
                 <div>
                   <span>{item.refundedQuantity}</span>
@@ -261,6 +280,7 @@ class LineItems extends Component {
   }
 
   popOverContent() {
+    const { shipmentMethod } = this.props.fulfillment;
     return (
       <div className="invoice-popover">
         <div className="invoice-popover-controls">
@@ -281,10 +301,16 @@ class LineItems extends Component {
         <div>
           {this.props.uniqueItems.map((uniqueItem, index) => (
             <div key={index}>
-              {this.renderPopOverLineItem(uniqueItem)}
-              {this.renderLineItemInvoice(uniqueItem)}
+              {this.renderPopOverLineItem(uniqueItem, this.props.getItemPrice(uniqueItem, uniqueItem.quantity))}
+              {this.renderLineItemInvoice(uniqueItem, this.props.getSubtotal(uniqueItem))}
             </div>
           ))}
+          {shipmentMethod &&
+            <div key="shipmentMethod">
+              {this.renderPopOverLineItem(shipmentMethod, this.props.getShipmentPrice(shipmentMethod), true)}
+              {this.renderLineItemInvoice(shipmentMethod, this.props.getShipmentPrice(shipmentMethod))}
+            </div>
+          }
         </div>
         <div>
           {!isEmpty(this.props.editedItems) && this.renderLineItemRefund()}

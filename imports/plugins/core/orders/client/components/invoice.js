@@ -5,6 +5,7 @@ import { withComponents } from "@reactioncommerce/components-context";
 import { CustomPropTypes } from "@reactioncommerce/components/utils";
 import { Components, registerComponent, withMoment } from "@reactioncommerce/reaction-components";
 import { formatPriceString, i18next } from "/client/api";
+import { taxLabel } from "../helpers";
 import LineItems from "./lineItems";
 import OrderPayment from "./OrderPayment";
 
@@ -45,6 +46,17 @@ class Invoice extends Component {
      * Function that renders media
      */
     displayMedia: PropTypes.func,
+    /**
+     * The fulfillment object
+     */
+    fulfillment: PropTypes.object,
+    getItemPrice: PropTypes.func,
+    getShipmentPrice: PropTypes.func,
+    getSubtotal: PropTypes.func,
+    /**
+     * A function to handle the popover open and close
+     */
+    handlePopOverOpen: PropTypes.func,
     /**
      * An order invoice document
      */
@@ -208,6 +220,38 @@ class Invoice extends Component {
   }
 
   /**
+    * @name renderTaxes
+    * @method
+    * @summary Displays the taxes form
+    * @returns {null} null
+    */
+  renderTaxes() {
+    const { invoice, fulfillment } = this.props;
+    const { taxes: totalTax } = invoice;
+    if (fulfillment && fulfillment.taxSummary) {
+      const { taxes } = fulfillment.taxSummary;
+      if (taxes && Array.isArray(taxes)) {
+        return (
+          <>{taxes.map((tax) => (<div className="order-summary-form-group" key={tax._id}>
+            <strong><Components.Translation defaultValue="Tax" i18nKey="cartSubTotals.tax"/>{taxLabel(tax)}</strong>
+            <div className="invoice-details">
+              {formatPriceString(tax.tax)}
+            </div>
+          </div>))}</>
+        );
+      }
+    }
+    return (
+      <div className="order-summary-form-group">
+        <strong><Components.Translation defaultValue="Tax" i18nKey="cartSubTotals.tax"/></strong>
+        <div className="invoice-details">
+          {formatPriceString(totalTax)}
+        </div>
+      </div>
+    );
+  }
+
+  /**
     * @name renderTotal
     * @method
     * @summary Displays the total payment form
@@ -232,7 +276,7 @@ class Invoice extends Component {
     * @returns {null} null
     */
   renderInvoice() {
-    const { invoice, discounts } = this.props;
+    const { invoice, discounts, handlePopOverOpen } = this.props;
 
     return (
       <div>
@@ -250,12 +294,21 @@ class Invoice extends Component {
           </div>
         </div>
 
-        <div className="order-summary-form-group">
+        <Components.Button
+          tagName="div"
+          className={{
+            "btn": false,
+            "btn-default": false,
+            "flat": false,
+            "order-summary-form-group": true
+          }}
+          onClick={handlePopOverOpen}
+        >
           <strong><Components.Translation defaultValue="Shipping" i18nKey="cartSubTotals.shipping"/></strong>
           <div className="invoice-details">
             {formatPriceString(invoice.shipping)}
           </div>
-        </div>
+        </Components.Button>
 
         {discounts &&
           <div>
@@ -278,12 +331,7 @@ class Invoice extends Component {
             </div>
           </div>
         }
-        <div className="order-summary-form-group">
-          <strong><Components.Translation defaultValue="Tax" i18nKey="cartSubTotals.tax"/></strong>
-          <div className="invoice-details">
-            {formatPriceString(invoice.taxes)}
-          </div>
-        </div>
+        {this.renderTaxes()}
         {this.renderTotal()}
         {this.renderRefundsInfo()}
       </div>
