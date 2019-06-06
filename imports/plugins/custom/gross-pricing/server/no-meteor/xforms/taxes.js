@@ -195,10 +195,10 @@ export default async function xformsGrossPrices(node, args, context) {
 }
 
 export async function xformsWithTaxes(cart, context) {
-  let { items: cartItems } = cart;
+  let { items } = cart;
   const { collections, shopId } = context;
 
-  if (!Array.isArray(cartItems) || cartItems.length === 0) {
+  if (!Array.isArray(items) || items.length === 0) {
     return cart;
   }
 
@@ -213,7 +213,7 @@ export async function xformsWithTaxes(cart, context) {
     const shippingAddress = addressBook.find((address) => address.isBillingDefault);
     const allTaxes = await taxesForShop(collections, { originAddress: shippingAddress, shippingAddress, shopId });
 
-    cartItems.forEach((item) => {
+    items.forEach((item) => {
       const { price, taxCode } = item;
       const { amount } = price;
       const taxes = taxesForItem(allTaxes, { amount, taxCode });
@@ -221,22 +221,26 @@ export async function xformsWithTaxes(cart, context) {
     });
   }
 
-  cartItems.forEach((item) => {
+  const cartItems = items.map((item) => {
     if (item.tax) {
-      item.subtotal.amount += item.tax;
-      item.price.amount += item.tax / item.quantity;
+      const subtotalAmount = item.subtotal.amount + item.tax;
+      const priceAmount = item.price.amount + item.tax / item.quantity;
+      return {
+        ...item,
+        subtotal: {
+          ...item.subtotal,
+          amount: subtotalAmount
+        },
+        price: {
+          ...item.price,
+          amount: priceAmount
+        }
+      };
     }
+    return { ...item };
   });
   return {
     ...cart,
     items: cartItems
   };
-
-  // export async function xformsItemGrossPrice({ shippingAddress, item }, context) {
-
-  //   const { price, taxCode } = item;
-  //   const { amount } = price;
-  //   const taxes = taxesForItem(allTaxes, { amount, taxCode });
-  //   item.tax = taxes.reduce((sum, taxDef) => sum + taxDef.tax, 0);
-  // }
 }
