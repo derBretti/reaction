@@ -24,6 +24,33 @@ function formatDateForEmail(date) {
 }
 
 /**
+ * @summary Calculates price according to user settings
+ * @param {Object} item - The Item
+ * @param {Number} userCurrencyExchangeRate - The exchange rate
+ * @param {Stirng} userCurrency - The currency code
+ * @param {Boolean} isTaxIncluded - If true, displayAmount includes tax, displayNetAmount is included
+ * @returns {Object} Price object to use when rendering email templates
+ */
+function getItemPrice(item, userCurrencyExchangeRate, userCurrency, isTaxIncluded) {
+  let netPrice = null;
+  let price;
+  if (isTaxIncluded) {
+    netPrice = item.price.amount;
+    price = item.price.amount + (item.tax / item.quantity);
+  } else {
+    price = item.price.amount;
+  }
+  const itemPrice = {
+    ...item.price,
+    displayAmount: formatMoney(price * userCurrencyExchangeRate, userCurrency)
+  };
+  if (netPrice !== null) {
+    itemPrice.displayNetAmount = formatMoney(netPrice * userCurrencyExchangeRate, userCurrency);
+  }
+  return itemPrice;
+}
+
+/**
  * @summary Builds data for rendering order emails
  * @param {Object} context - App context
  * @param {Object} input - Necessary input
@@ -32,25 +59,38 @@ function formatDateForEmail(date) {
  */
 export default async function getDataForOrderEmail(context, { order }) {
   const { collections, getAbsoluteUrl } = context;
-  const { Shops } = collections;
+  const { Packages, Shops } = collections;
 
   // Get Shop information
   const shop = await Shops.findOne({ _id: order.shopId });
-
+  const plugin = await Packages.findOne({ name: "reaction-taxes", shopId: order.shopId });
+  const isTaxIncluded = plugin && !!plugin.settings.includeTaxInItemPrice;
   // TODO need to make this fully support multiple fulfillment groups. Now it's just collapsing into one
   const amount = order.shipping.reduce((sum, group) => sum + group.invoice.total, 0);
   const discounts = order.shipping.reduce((sum, group) => sum + group.invoice.discounts, 0);
-  let displayNetAmount = false;
-  const netAmountAmount = order.shipping.reduce((sum, group) => {
-    if (group.invoice.netAmount !== undefined && group.invoice.netAmount !== null) {
-      displayNetAmount = true;
-      return sum + group.invoice.netAmount;
-    }
-    return sum;
-  }, 0);
-  const subtotal = order.shipping.reduce((sum, group) => sum + group.invoice.subtotal, 0);
+  let netAmountAmount = null;
+  let shippingNetAmountAmount = null;
+
+  // net sums
+  let subtotal = order.shipping.reduce((sum, group) => sum + group.invoice.subtotal, 0);
+  let shippingCost = order.shipping.reduce((sum, group) => sum + group.invoice.shipping, 0);
   const taxes = order.shipping.reduce((sum, group) => sum + group.invoice.taxes, 0);
-  const shippingCost = order.shipping.reduce((sum, group) => sum + group.invoice.shipping, 0);
+  let total = subtotal + shippingCost - discounts;
+
+  if (isTaxIncluded) {
+    // include taxes in sums and
+    netAmountAmount = order.shipping.reduce((sum, group) => {
+      if (group.invoice.netAmount !== undefined && group.invoice.netAmount !== null) {
+        return sum + group.invoice.netAmount;
+      }
+      return sum;
+    }, 0);
+    subtotal += order.shipping.reduce((sum, group) => sum + group.items.reduce((tax, item) => tax + item.tax, 0), 0);
+    shippingNetAmountAmount = shippingCost;
+    shippingCost += order.shipping.reduce((sum, group) => sum + group.shipmentMethod.tax, 0);
+  }
+  // add tax to total
+  total += taxes;
 
   const { address: shippingAddress, shipmentMethod, tracking } = order.shipping[0];
   const { carrier } = shipmentMethod;
@@ -109,11 +149,7 @@ export default async function getDataForOrderEmail(context, { order }) {
     items = items.map((item) => ({
       ...item,
       placeholderImage: getAbsoluteUrl("/resources/placeholder.gif"),
-      price: {
-        ...item.price,
-        // Add displayAmount to match user currency settings
-        displayAmount: formatMoney(item.price.amount * userCurrencyExchangeRate, userCurrency)
-      },
+      price: getItemPrice(item, userCurrencyExchangeRate, userCurrency, isTaxIncluded),
       // These next two are for backward compatibility with existing email templates.
       // New templates should use `imageURLs` instead.
       productImage: item.imageURLs && item.imageURLs.large,
@@ -132,15 +168,38 @@ export default async function getDataForOrderEmail(context, { order }) {
     // Increment the quantity count for the duplicate product variants
     if (foundItem) {
       foundItem.quantity += orderItem.quantity;
+      foundItem.subtotal.amount += orderItem.subtotal.amount;
+      foundItem.tax += orderItem.tax;
     } else {
       // Otherwise push the unique item into the combinedItems array
+      // Set net price
       combinedItems.push(orderItem);
     }
   }
 
+  // add readable subtotal
+  combinedItems.forEach((item) => {
+    let subtotalAmount;
+    let netSubtotalAmount = null;
+    if (isTaxIncluded) {
+      netSubtotalAmount = item.subtotal.amount;
+      subtotalAmount = item.subtotal.amount + item.tax;
+    } else {
+      subtotalAmount = item.subtotal.amount;
+    }
+    item.subtotal.displayAmount = formatMoney(subtotalAmount * userCurrencyExchangeRate, userCurrency)
+    if (netSubtotalAmount !== null) {
+      item.subtotal.displayNetAmount = formatMoney(netSubtotalAmount * userCurrencyExchangeRate, userCurrency);
+    }
+  });
+
   let netAmount;
+  let shippingNetAmount;
   if (netAmountAmount !== null) {
     netAmount = formatMoney(netAmountAmount * userCurrencyExchangeRate, userCurrency);
+  }
+  if (shippingNetAmountAmount !== null) {
+    shippingNetAmount = formatMoney(shippingNetAmountAmount * userCurrencyExchangeRate, userCurrency);
   }
   const copyrightDate = new Date().getFullYear();
 
@@ -184,21 +243,19 @@ export default async function getDataForOrderEmail(context, { order }) {
     },
     billing: {
       address: billingAddressForEmail,
-      displayNetAmount,
       netAmount,
+      isTaxIncluded,
       payments: (order.payments || []).map((payment) => ({
         displayName: payment.displayName,
         displayAmount: formatMoney(payment.amount * userCurrencyExchangeRate, userCurrency)
       })),
       subtotal: formatMoney(subtotal * userCurrencyExchangeRate, userCurrency),
       shipping: formatMoney(shippingCost * userCurrencyExchangeRate, userCurrency),
+      shippingNetAmount,
       taxes: formatMoney(taxes * userCurrencyExchangeRate, userCurrency),
       discounts: formatMoney(discounts * userCurrencyExchangeRate, userCurrency),
       refunds: formatMoney(refundTotal * userCurrencyExchangeRate, userCurrency),
-      total: formatMoney(
-        (subtotal + shippingCost + taxes - discounts) * userCurrencyExchangeRate,
-        userCurrency
-      ),
+      total: formatMoney(total * userCurrencyExchangeRate, userCurrency),
       adjustedTotal: formatMoney(
         (amount - refundTotal) * userCurrencyExchangeRate,
         userCurrency

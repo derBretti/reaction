@@ -299,7 +299,18 @@ export default `
                                                   <tbody>
                                                     <tr>
                                                       <td align="left" valign="middle" style="font-size:12px; line-height:normal; color:#4c4c4d; font-family:Arial, helvetica;">{{title}} - {{variants.title}}</td>
-                                                      <td align="right" valign="middle" style="font-size:12px; line-height:normal; color:#4c4c4d; font-family:Arial, helvetica;">{{price.displayAmount}}</td>
+                                                      <td align="right" valign="middle" style="font-size:12px; line-height:normal; color:#4c4c4d; font-family:Arial, helvetica;">
+                                                        {{price.displayAmount}}
+                                                        {{#if price.displayNetAmount}}
+                                                          <br/>({{price.displayNetAmount}})
+                                                        {{/if}}
+                                                      </td>
+                                                      <td align="right" valign="middle" style="font-size:12px; line-height:normal; color:#4c4c4d; font-family:Arial, helvetica;">
+                                                        {{subtotal.displayAmount}}
+                                                        {{#if subtotal.displayNetAmount}}
+                                                        <br/>({{subtotal.displayNetAmount}})
+                                                        {{/if}}
+                                                      </td>
                                                     </tr>
                                                   </tbody>
                                                 </table>
@@ -327,12 +338,16 @@ export default `
                                               <td valign="top" align="right" style="font-size:12px; line-height:normal; color:#4c4c4d; font-family:Arial, helvetica;">Subtotal: {{billing.subtotal}}</td>
                                             </tr>
                                             <tr>
-                                              <td valign="top" align="right" style="font-size:12px; line-height:normal; color:#4c4c4d; font-family:Arial, helvetica;">Shipping: {{billing.shipping}}</td>
+                                              <td valign="top" align="right" style="font-size:12px; line-height:normal; color:#4c4c4d; font-family:Arial, helvetica;">Shipping: 
+                                              {{#if billing.isTaxIncluded}}
+                                                ({{billing.shippingNetAmount}})
+                                              {{/if}}
+                                              {{billing.shipping}}</td>
                                             </tr>
                                             <tr>
                                               <td valign="top" align="right" style="font-size:12px; line-height:normal; color:#4c4c4d; font-family:Arial, helvetica;">Discounts: {{billing.discounts}}</td>
                                             </tr>
-                                            {{#if billing.displayNetAmount}}
+                                            {{#if billing.isTaxIncluded}}
                                             <tr>
                                               <td valign="top" align="right" style="font-size:12px; line-height:normal; color:#4c4c4d; font-family:Arial, helvetica;">Total (excl. tax): {{billing.netAmount}}</td>
                                             </tr>
