@@ -224,7 +224,7 @@ class LineItems extends Component {
             {editedItems.map((item, index) => (
               <div className="refund-item" key={index}>
                 <div>
-                  <span>{item.title || item.label}</span>
+                  <span>{item.title}</span>
                 </div>
                 <div>
                   <span>{item.refundedQuantity}</span>
