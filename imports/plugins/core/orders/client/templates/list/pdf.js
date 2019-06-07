@@ -1,9 +1,10 @@
 import Logger from "@reactioncommerce/logger";
 import { Template } from "meteor/templating";
 import { Reaction, Router } from "/client/api";
-import { Orders } from "/lib/collections";
+import { Orders, Packages } from "/lib/collections";
 import { ReactiveDict } from "meteor/reactive-dict";
 import { ReactiveVar } from "meteor/reactive-var";
+import { itemPrice as itemPriceHelper, shipmentPrice as shipmentPriceHelper, taxLabel, itemsTax } from "../../helpers";
 
 /**
 * completedPDFLayout
@@ -13,6 +14,7 @@ import { ReactiveVar } from "meteor/reactive-var";
 Template.completedPDFLayout.onCreated(function () {
   this.state = new ReactiveDict();
   this.state.setDefault({
+    isTaxIncluded: false,
     order: {},
     ready: false
   });
@@ -29,6 +31,10 @@ Template.completedPDFLayout.onCreated(function () {
     });
 
   const currentRoute = Router.current();
+  const plugin = Packages.findOne({ name: "reaction-taxes", shopId: Reaction.getShopId() });
+  this.state.set({
+    isTaxIncluded: plugin && !!plugin.settings.includeTaxInItemPrice
+  });
 
   this.autorun(() => {
     this.subscribe("OrderById", currentRoute.params.id);
@@ -67,7 +73,23 @@ Template.completedPDFLayout.helpers({
     }
     return "";
   },
+  itemPrice(item) {
+    return itemPriceHelper(item, item.quantity, Template.instance().state.get("isTaxIncluded"));
+  },
   ready() {
     return Template.instance().readyVar.get();
-  }
+  },
+  shipmentPrice(shipment) {
+    return shipmentPriceHelper(shipment, Template.instance().state.get("isTaxIncluded"));
+  },
+  showTaxes(shipment) {
+    return shipment.taxSummary && shipment.taxSummary.taxes;
+  },
+  itemTotal(shipment) {
+    if (Template.instance().state.get("isTaxIncluded")) {
+      return { price: shipment.invoice.subtotal + itemsTax(shipment.items) };
+    }
+    return { price: shipment.invoice.subtotal };
+  },
+  taxLabel
 });
