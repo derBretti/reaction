@@ -209,3 +209,75 @@ export function taxLabel(tax) {
   }
   return ` ${label}${taxRate && (taxRate * 100).toLocaleString()}%`;
 }
+
+/**
+ * @name itemPrice
+ * @memberof Helpers
+ * @param {Object} item - The item
+ * @param {Number} quantity - The quantity
+ * @param {Boolean} isTaxIncluded - If true, price includes tax and net price is include in output
+ * @returns {Object} price and ne price
+ */
+export function itemPrice(item, quantity, isTaxIncluded) {
+  let netPrice = null;
+  let price;
+  if (isTaxIncluded) {
+    netPrice = item.price.amount;
+    price = item.price.amount + (item.tax / quantity);
+  } else {
+    price = item.price.amount;
+  }
+  return { netPrice, price };
+}
+
+/**
+ * @name shipmentPrice
+ * @memberof Helpers
+ * @param {Object} shipmentMethod - The shipmentMethod
+ * @param {Boolean} isTaxIncluded - If true, price includes tax and net price is include in output
+ * @returns {Object} price and net price
+ */
+export function shipmentPrice(shipmentMethod, isTaxIncluded) {
+  let netPrice = null;
+  let price;
+  if (isTaxIncluded) {
+    netPrice = shipmentMethod.rate + shipmentMethod.handling;
+    if (shipmentMethod.tax) {
+      price = netPrice + shipmentMethod.tax;
+    } else {
+      price = netPrice;
+    }
+  } else {
+    price = shipmentMethod.rate + shipmentMethod.handling;
+  }
+  return { netPrice, price };
+}
+
+/**
+ * @name itemsTax
+ * @memberof Helpers
+ * @param {Object[]} items - The items
+ * @returns {Object} cumulated taxes on items
+ */
+export function itemsTax(items) {
+  return items.reduce((tax, item) => tax + item.tax, 0);
+}
+
+/**
+ * @name subtotal
+ * @memberof Helpers
+ * @param {Object} item - The item
+ * @param {Boolean} isTaxIncluded - If true, price includes tax and net price is include in output
+ * @returns {Object} price and net price
+ */
+export function subtotal(item, isTaxIncluded) {
+  let netPrice = null;
+  let price;
+  if (isTaxIncluded) {
+    price = item.subtotal + item.tax;
+    netPrice = item.subtotal;
+  } else {
+    price = item.subtotal;
+  }
+  return { netPrice, price };
+}

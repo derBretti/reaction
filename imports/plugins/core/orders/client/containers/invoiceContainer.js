@@ -10,7 +10,7 @@ import formatMoney from "/imports/utils/formatMoney";
 import simpleGraphQLClient from "/imports/plugins/core/graphql/lib/helpers/simpleClient";
 import { composeWithTracker, registerComponent } from "@reactioncommerce/reaction-components";
 import Invoice from "../components/invoice.js";
-import { approvePayment, getOrderRiskStatus, getOrderRiskBadge, getShippingInfo } from "../helpers";
+import { approvePayment, getOrderRiskStatus, getOrderRiskBadge, getShippingInfo, shipmentPrice, itemPrice, subtotal, itemsTax } from "../helpers";
 import { captureOrderPayments } from "../graphql";
 
 class InvoiceContainer extends Component {
@@ -74,45 +74,11 @@ class InvoiceContainer extends Component {
     this._isMounted = false;
   }
 
-  getShipmentPrice = (shipmentMethod) => {
-    let netPrice = null;
-    let price;
-    if (this.props.isTaxIncluded) {
-      netPrice = shipmentMethod.rate + shipmentMethod.handling;
-      if (shipmentMethod.tax) {
-        price = netPrice + shipmentMethod.tax;
-      } else {
-        price = netPrice;
-      }
-    } else {
-      price = shipmentMethod.rate + shipmentMethod.handling;
-    }
-    return { netPrice, price };
-  }
+  getShipmentPrice = (shipmentMethod) => shipmentPrice(shipmentMethod, this.props.isTaxIncluded);
 
-  getItemPrice = (uniqueItem, quantity) => {
-    let netPrice = null;
-    let price;
-    if (this.props.isTaxIncluded) {
-      netPrice = uniqueItem.price.amount;
-      price = uniqueItem.price.amount + (uniqueItem.tax / quantity);
-    } else {
-      price = uniqueItem.price.amount;
-    }
-    return { netPrice, price };
-  }
+  getItemPrice = (uniqueItem, quantity) => itemPrice(uniqueItem, quantity, this.props.isTaxIncluded);
 
-  getSubtotal = (uniqueItem) => {
-    let netPrice = null;
-    let price;
-    if (this.props.isTaxIncluded) {
-      price = uniqueItem.subtotal + uniqueItem.tax;
-      netPrice = uniqueItem.subtotal;
-    } else {
-      price = uniqueItem.subtotal;
-    }
-    return { netPrice, price };
-  }
+  getSubtotal = (uniqueItem) => subtotal(uniqueItem, this.props.isTaxIncluded);
 
   handlePopOverOpen = (event) => {
     event.preventDefault();
@@ -153,7 +119,7 @@ class InvoiceContainer extends Component {
         const { price } = isShipment ? this.getShipmentPrice(lineItem) : this.getItemPrice(lineItem, quantity) * quantity;
         editedItems.push({
           id: lineItem._id,
-          title: lineItem.title,
+          title: lineItem.title || lineItem.label,
           refundedTotal: price,
           refundedQuantity: quantity
         });
@@ -588,9 +554,9 @@ const composer = (props, onData) => {
       return result;
     }, []);
 
-    let { shipping, subtotal } = invoice;
+    let { shipping, subtotal: itemTotal } = invoice;
     if (isTaxIncluded) {
-      subtotal += orderItems.reduce((tax, item) => tax + item.tax, 0);
+      itemTotal += itemsTax(orderItems);
       if (shipmentMethod.tax) {
         shipping += shipmentMethod.tax;
       }
@@ -600,7 +566,7 @@ const composer = (props, onData) => {
     const invoiceWithTotalItems = {
       ...invoice,
       shipping,
-      subtotal,
+      subtotal: itemTotal,
       totalItems: order.totalItemQuantity
     };
 
