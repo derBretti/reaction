@@ -194,18 +194,14 @@ export default async function xformsGrossPrices(node, args, context) {
   });
 }
 
-export async function xformsWithTaxes(cart, context) {
+async function xformsItemsWithTaxes(cart, context) {
   let { items } = cart;
   const { collections, shopId } = context;
 
   if (!Array.isArray(items) || items.length === 0) {
-    return cart;
+    return null;
   }
 
-  const includeTaxInItemPrice = await isTaxIncluded(collections, shopId);
-  if (!includeTaxInItemPrice) {
-    return cart;
-  }
   // taxes should be included, calculate taxes for tax summary if it does not exist
   if (!cart.taxSummary) {
     const shop = await context.queries.shopById(context, shopId);
@@ -220,7 +216,19 @@ export async function xformsWithTaxes(cart, context) {
       item.tax = taxes.reduce((sum, taxDef) => sum + taxDef.tax, 0);
     });
   }
+  return items;
+}
 
+export async function xformsCartWithTaxes(cart, context) {
+  const { collections, shopId } = context;
+  const includeTaxInItemPrice = await isTaxIncluded(collections, shopId);
+  if (!includeTaxInItemPrice) {
+    return cart;
+  }
+  const items = await xformsItemsWithTaxes(cart, context);
+  if (!items) {
+    return cart;
+  }
   const cartItems = items.map((item) => {
     if (item.tax) {
       const subtotalAmount = item.subtotal.amount + item.tax;
@@ -242,5 +250,37 @@ export async function xformsWithTaxes(cart, context) {
   return {
     ...cart,
     items: cartItems
+  };
+}
+
+export async function xformsFulfillmentGroupWithTaxes(orderFulfillmentGroup, context) {
+  const { collections, shopId } = context;
+  const includeTaxInItemPrice = await isTaxIncluded(collections, shopId);
+  if (!includeTaxInItemPrice) {
+    return orderFulfillmentGroup;
+  }
+  const items = await xformsItemsWithTaxes(orderFulfillmentGroup, context);
+  if (!items) {
+    return orderFulfillmentGroup;
+  }
+
+  const orderFulfillmentGroupItems = items.map((item) => {
+    if (item.tax) {
+      const subtotal = item.subtotal + item.tax;
+      const priceAmount = item.price.amount + item.tax / item.quantity;
+      return {
+        ...item,
+        subtotal,
+        price: {
+          ...item.price,
+          amount: priceAmount
+        }
+      };
+    }
+    return { ...item };
+  });
+  return {
+    ...orderFulfillmentGroup,
+    items: orderFulfillmentGroupItems
   };
 }
