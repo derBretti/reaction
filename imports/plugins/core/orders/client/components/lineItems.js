@@ -75,6 +75,7 @@ class LineItems extends Component {
 
   renderLineItem(uniqueItem) {
     const { netPrice, price } = this.props.getItemPrice(uniqueItem, uniqueItem.quantity);
+    const { netPrice: netSubtotal, price: subtotal } = this.props.getSubtotal(uniqueItem);
     return (
       <div className="order-items invoice-item">
         <div
@@ -100,6 +101,13 @@ class LineItems extends Component {
             <div className="invoice-details" style={{ marginRight: 15 }}>
               <strong>{formatPriceString(price)}</strong>
               {netPrice && <div>({formatPriceString(netPrice)})</div>}
+            </div>
+          </div>
+
+          <div className="order-detail-subtotal">
+            <div className="invoice-details" style={{ marginRight: 15 }}>
+              <strong>{formatPriceString(subtotal)}</strong>
+              {netSubtotal && <div>({formatPriceString(netSubtotal)})</div>}
             </div>
           </div>
 

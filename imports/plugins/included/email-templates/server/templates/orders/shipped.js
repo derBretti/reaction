@@ -334,10 +334,11 @@ export default `
                                             </tr>
                                             <tr>
                                               <td valign="top" align="right" style="font-size:12px; line-height:normal; color:#4c4c4d; font-family:Arial, helvetica;">Shipping: 
-                                              {{#if billing.isTaxIncluded}}
-                                                ({{billing.shippingNetAmount}})
-                                              {{/if}}
-                                              {{billing.shipping}}</td>
+                                                {{billing.shipping}}
+                                                {{#if billing.isTaxIncluded}}
+                                                  </br>({{billing.shippingNetAmount}})
+                                                {{/if}}
+                                              </td>
                                             </tr>
                                             <tr>
                                               <td valign="top" align="right" style="font-size:12px; line-height:normal; color:#4c4c4d; font-family:Arial, helvetica;">Discounts: {{billing.discounts}}</td>
