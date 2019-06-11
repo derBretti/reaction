@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import ReactionError from "@reactioncommerce/reaction-error";
 import { registerComponent, Components } from "@reactioncommerce/reaction-components";
 import { Reaction } from "/client/api";
 import { Meteor } from "meteor/meteor";
@@ -37,11 +38,13 @@ const styles = (theme) => ({
 function CoreLayout({ classes, location }) {
   let content = <Components.Login />;
 
+  const isAdmin = Reaction.hasDashboardAccessForAnyShop();
+
   // If we're not on /account or /account/login for hydra, and the user is signed in,
   // then we will redirect or show a logout button
   if (location.pathname.startsWith("/account") === false) {
     // If the current user is an admin then redirect to /operator
-    if (Reaction.hasDashboardAccessForAnyShop()) {
+    if (isAdmin) {
       window.location.replace("/operator");
       return null;
     }
@@ -50,23 +53,26 @@ function CoreLayout({ classes, location }) {
     // But they aren't an admin, then give them a logout button.
     if (!Reaction.hasPermission(["anonymous"])) {
       // If the user is logged in but not a admin redirect to the storefront.
-      if (!Reaction.hasAdminAccess()) {
+      if (!isAdmin) {
         const { storefrontUrls } = Reaction.getCurrentShop();
-        window.location.href = `${storefrontUrls.storefrontHomeUrl}`;
-        return null;
+
+        if (!storefrontUrls || !storefrontUrls.storefrontHomeUrl) {
+          throw new ReactionError("error-occurred", "Missing storefront URLs. Please set these properties from the shop settings panel.");
+        } else if (location.pathname.startsWith("/reset") === false) {
+          window.location.href = storefrontUrls.storefrontHomeUrl;
+          return null;
+        }
       }
 
-      content = (
-        <div className={classes.logoutButton}>
-          <Button
-            color="primary"
-            onClick={() => Meteor.logout()}
-            variant="contained"
-          >
-            {"Logout"}
-          </Button>
-        </div>
-      );
+      if (location.pathname.startsWith("/reset") === false) {
+        content = (
+          <div className={classes.logoutButton}>
+            <Button color="primary" onClick={() => Meteor.logout()} variant="contained">
+              {"Logout"}
+            </Button>
+          </div>
+        );
+      }
     }
   }
 
@@ -75,10 +81,7 @@ function CoreLayout({ classes, location }) {
       <div className={classes.root}>
         <div className={classes.content}>
           <div className={classes.logo}>
-            <ShopLogo
-              linkTo="/"
-              size={200}
-            />
+            <ShopLogo linkTo="/" size={200} />
           </div>
           {content}
         </div>
