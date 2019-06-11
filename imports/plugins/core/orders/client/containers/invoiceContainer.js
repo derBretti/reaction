@@ -109,18 +109,18 @@ class InvoiceContainer extends Component {
 
       if (isEdited) {
         const adjustedQuantity = isShipment ? 0 : (lineItem.quantity - this.state.value);
-        const { price } = isShipment ? 0 : this.getItemPrice(lineItem, adjustedQuantity) * adjustedQuantity;
+        const price = isShipment ? 0 : this.getItemPrice(lineItem, adjustedQuantity).price;
         editedItems = editedItems.filter((item) => item.id !== lineItem._id);
-        isEdited.refundedTotal = price;
+        isEdited.refundedTotal = price * adjustedQuantity;
         isEdited.refundedQuantity = adjustedQuantity;
         editedItems.push(isEdited);
       } else {
         const quantity = isShipment ? 1 : lineItem.quantity;
-        const { price } = isShipment ? this.getShipmentPrice(lineItem) : this.getItemPrice(lineItem, quantity) * quantity;
+        const price = isShipment ? this.getShipmentPrice(lineItem).price : this.getItemPrice(lineItem, quantity).price;
         editedItems.push({
           id: lineItem._id,
           title: lineItem.title || lineItem.label,
-          refundedTotal: price,
+          refundedTotal: price * quantity,
           refundedQuantity: quantity
         });
       }
