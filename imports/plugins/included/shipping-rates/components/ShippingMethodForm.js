@@ -95,10 +95,10 @@ export default class ShippingMethodForm extends Component {
             <ErrorsBlock names={["isEnabled"]} />
           </Field>
           <Field name="isTaxable">
-            <Checkbox name="isTaxable" label={i18next.t("taxSettings.taxable")} />
+            <Checkbox name="isTaxable" label={i18next.t("admin.taxSettings.taxable")} />
             <ErrorsBlock names={["isTaxable"]} />
           </Field>
-          <Field name="taxCode" label={i18next.t("taxSettings.taxCode")} labelFor={taxCodeInputId}>
+          <Field name="taxCode" label={i18next.t("admin.taxSettings.taxCode")} labelFor={taxCodeInputId}>
             <Select id={taxCodeInputId} name="taxCode" options={taxCodeOptions} />
             <ErrorsBlock names={["taxCode"]} />
           </Field>
