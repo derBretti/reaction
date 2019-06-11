@@ -8,11 +8,9 @@
  */
 export default async function taxesForShop(collections, { originAddress, shippingAddress, shopId }) {
   const { Taxes } = collections;
-
-  // Find all defined taxes where the shipping address or origin address is a match
-  const taxDocs = await Taxes.find({
-    shopId,
-    $or: [{
+  const conditions = [];
+  if (shippingAddress) {
+    conditions.push({
       taxLocale: "destination",
       $or: [{
         postal: shippingAddress.postal
@@ -25,8 +23,10 @@ export default async function taxesForShop(collections, { originAddress, shippin
         region: null,
         country: shippingAddress.country
       }]
-    },
-    {
+    });
+  }
+  if (originAddress) {
+    conditions.push({
       taxLocale: "origin",
       $or: [{
         postal: originAddress.postal
@@ -39,7 +39,12 @@ export default async function taxesForShop(collections, { originAddress, shippin
         region: null,
         country: originAddress.country
       }]
-    }]
+    });
+  }
+  // Find all defined taxes where the shipping address or origin address is a match
+  const taxDocs = await Taxes.find({
+    shopId,
+    $or: conditions
   }).toArray();
 
   // Rate is entered and stored in the database as a percent. Convert to ratio.
