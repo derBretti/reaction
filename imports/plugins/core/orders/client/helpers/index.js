@@ -198,10 +198,10 @@ export function taxLabel(tax) {
   if (country) {
     label = `(${country}`;
     if (region) {
-      label += ` ,${region}`;
+      label += `, ${region}`;
     }
     if (postal) {
-      label += ` ,${postal}`;
+      label += `, ${postal}`;
     }
     label += ") ";
   } else if (name) {
