@@ -69,7 +69,8 @@ export const CommonOrderItem = new SimpleSchema({
 export const CommonOrderFulfillmentMethod = new SimpleSchema({
   _id: String,
   isTaxable: {
-    type: Boolean
+    type: Boolean,
+    defaultValue: false
   },
   rate: {
     type: Number,

@@ -31,7 +31,7 @@ export default async function calculateOrderTaxes({ context, order }) {
   let totalTax = 0;
   const groupTaxes = {};
 
-  [...itemTaxes, ...shippingTaxes].forEach((itemTax) => {
+  [...itemTaxes, ...(shippingTaxes || [])].forEach((itemTax) => {
     const { tax, taxableAmount, taxes } = itemTax;
     // Update the group taxes list
     taxes.forEach((taxDef) => {
@@ -61,8 +61,7 @@ export default async function calculateOrderTaxes({ context, order }) {
     }
   }
 
-  return {
-    shippingTaxes,
+  const taxResult = {
     itemTaxes,
     taxSummary: {
       calculatedAt: new Date(),
@@ -73,4 +72,9 @@ export default async function calculateOrderTaxes({ context, order }) {
       taxes: Object.values(groupTaxes)
     }
   };
+
+  if (shippingTaxes && Array.isArray(shippingTaxes)) {
+    taxResult.shippingTaxes = shippingTaxes;
+  }
+  return taxResult;
 }

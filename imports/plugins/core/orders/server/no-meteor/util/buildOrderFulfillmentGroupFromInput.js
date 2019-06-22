@@ -29,7 +29,7 @@ export default async function buildOrderFulfillmentGroupFromInput(context, {
 
   const shop = await context.queries.shopById(context, shopId);
   const { addressBook } = shop;
-  const originAddress = addressBook.find((address) => address.isBillingDefault);
+  const originAddress = (addressBook && addressBook.find((address) => address.isBillingDefault)) || null;
 
   const group = {
     _id: Random.id(),

@@ -10,7 +10,7 @@ import taxesForItem from "./taxesForItem";
 export default function calculateShippingTaxes(allTaxes, fulfillmentGroups) {
   return fulfillmentGroups.map((shipmentMethod) => {
     let taxes;
-    if (shipmentMethod && shipmentMethod.isTaxable) {
+    if (shipmentMethod.isTaxable) {
       const amount = +toFixed((shipmentMethod.handling || 0) + shipmentMethod.rate, 3);
       taxes = taxesForItem(allTaxes, { ...shipmentMethod, amount });
     } else {

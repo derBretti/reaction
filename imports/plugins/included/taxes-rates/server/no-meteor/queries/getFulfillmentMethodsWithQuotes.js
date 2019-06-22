@@ -20,9 +20,11 @@ export default async function getFulfillmentMethodsWithQuotes(commonOrder, conte
   const allTaxes = await taxesForShop(collections, { originAddress, shippingAddress, shopId });
   const methods = rates.map((rate) => rate.method);
   const shippingTaxes = await calculateShippingTaxes(allTaxes, methods);
-  rates.forEach((rate) => {
-    // calculate taxes for shipping
-    addTaxToShipmentMethod(shippingTaxes, rate);
-  });
+  if (shippingTaxes) {
+    rates.forEach((rate) => {
+      // calculate taxes for shipping
+      addTaxToShipmentMethod(shippingTaxes, rate);
+    });
+  }
   return rates;
 }
