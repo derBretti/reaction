@@ -1,10 +1,17 @@
+import addInvoiceToGroup from "../util/addInvoiceToGroup";
+import xformFulfillmentMethodToShipmentMethod from "./xformFulfillmentMethodToShipmentMethod";
 import Factory from "/imports/test-utils/helpers/factory";
 import mockContext from "/imports/test-utils/helpers/mockContext";
 import placeOrder from "./placeOrder";
 
 beforeEach(() => {
   jest.resetAllMocks();
-  mockContext.getFunctionsOfType.mockReturnValue([]);
+  mockContext.getFunctionsOfType.mockImplementation((name) => {
+    if (name === "addInvoiceToGroup") {
+      return [addInvoiceToGroup];
+    }
+    return [];
+  });
 });
 
 test("throws if order isn't supplied", async () => {
@@ -49,9 +56,12 @@ test("places an anonymous $0 order with no cartId and no payments", async () => 
   }]);
 
   mockContext.queries.shopById = jest.fn().mockName("shopById");
-  mockContext.queries.shopById.mockReturnValueOnce([{
+  mockContext.queries.shopById.mockReturnValue([{
     availablePaymentMethods: ["PAYMENT1"]
   }]);
+
+  mockContext.mutations.xformFulfillmentMethodToShipmentMethod = jest.fn().mockName("xformFulfillmentMethodToShipmentMethod");
+  mockContext.mutations.xformFulfillmentMethodToShipmentMethod.mockImplementation(xformFulfillmentMethodToShipmentMethod);
 
   const orderInput = Factory.orderInputSchema.makeOne({
     billingAddress: null,

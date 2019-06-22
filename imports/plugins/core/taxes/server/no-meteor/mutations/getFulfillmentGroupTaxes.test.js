@@ -210,9 +210,11 @@ test("minimal result from primary tax service", async () => {
 
   const mockResult = Factory.TaxServiceResult.makeOne({
     itemTaxes: [itemTax],
-    taxSummary
+    taxSummary,
+    shippingTaxes: null
   });
   delete mockResult._id; // There is a bug where Factory package adds _id even if it isn't in the schema
+  delete mockResult.shippingTaxes; // delete optional field shippingTaxes
 
   const calculateOrderTaxes = jest.fn().mockName("calculateOrderTaxes").mockReturnValueOnce(Promise.resolve(mockResult));
 
@@ -266,9 +268,11 @@ test("null result from primary tax service, minimal result from fallback tax ser
 
   const mockResult = Factory.TaxServiceResult.makeOne({
     itemTaxes: [itemTax],
-    taxSummary
+    taxSummary,
+    shippingTaxes: null
   });
   delete mockResult._id; // There is a bug where Factory package adds _id even if it isn't in the schema
+  delete mockResult.shippingTaxes; // delete optional field shippingTaxes
 
   const calculateOrderTaxes = jest.fn().mockName("calculateOrderTaxes").mockReturnValueOnce(Promise.resolve(null));
   const fallbackCalculateOrderTaxes = jest.fn().mockName("fallbackCalculateOrderTaxes").mockReturnValueOnce(Promise.resolve(mockResult));
@@ -329,9 +333,11 @@ test("throws if the result doesn't match the schema", async () => {
 
   const mockResult = Factory.TaxServiceResult.makeOne({
     itemTaxes: [itemTax],
-    taxSummary
+    taxSummary,
+    shippingTaxes: null
   });
   delete mockResult._id; // There is a bug where Factory package adds _id even if it isn't in the schema
+  delete mockResult.shippingTaxes; // delete optional field shippingTaxes
 
   const calculateOrderTaxes = jest.fn().mockName("calculateOrderTaxes").mockReturnValueOnce(Promise.resolve(mockResult));
 

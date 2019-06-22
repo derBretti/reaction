@@ -20,7 +20,7 @@ jest.mock("../util/getCartById", () => jest.fn().mockImplementation(() => Promis
 const fakeCart = Factory.Cart.makeOne();
 
 test("selects an existing shipping method", async () => {
-  mockContext.collections.Cart.findOne.mockReturnValueOnce(Promise.resolve(fakeCart));
+  mockContext.collections.Cart.findOne.mockReturnValue(Promise.resolve(fakeCart));
 
   const result = await selectFulfillmentOptionForGroup(mockContext, {
     cartId: "cartId",
