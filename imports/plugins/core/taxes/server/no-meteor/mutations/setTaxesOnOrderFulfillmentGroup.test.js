@@ -96,6 +96,97 @@ test("mutates group.items and group.taxSummary", async () => {
   expect(group.taxSummary).toEqual(taxSummary);
 });
 
+const taxSummaryWithTaxedShipping = {
+  calculatedAt: new Date("2019-01-01T10:00:00"),
+  calculatedByTaxServiceName: "mockService",
+  tax: 1.1,
+  taxableAmount: 16.98,
+  taxes: [
+    {
+      sourcing: "destination",
+      tax: 0.5,
+      taxableAmount: 10.99,
+      taxName: "City tax",
+      taxRate: 0.01
+    },
+    {
+      sourcing: "origin",
+      tax: 0.6,
+      taxableAmount: 5.99,
+      taxName: "Shipping tax",
+      taxRate: 0.1
+    }
+  ]
+};
+
+const shippingTaxes = [
+  {
+    sourcing: "origin",
+    tax: 0.6,
+    taxableAmount: 5.99,
+    taxName: "Shipping tax",
+    taxRate: 0.1
+  }
+];
+
+const shipmentMethodId = "s1";
+
+const groupWithShipmentMethod = {
+  ...group,
+  shipmentMethodId,
+  shipmentMethod: {
+    _id: shipmentMethodId,
+    currencyCode: "USD",
+    handling: 0,
+    isTaxable: true,
+    label: "mockLabel",
+    name: "mockName",
+    rate: 5.99
+  }
+};
+
+test("mutates group.shipmentMethod and group.taxSummary", async () => {
+  mockContext.mutations.getFulfillmentGroupTaxes.mockReturnValueOnce(Promise.resolve({
+    itemTaxes: [
+      {
+        itemId: "1",
+        tax: 0.5,
+        taxableAmount: 10.99,
+        taxes: itemTaxes
+      }
+    ],
+    shippingTaxes: [
+      {
+        itemId: "s1",
+        tax: 0.6,
+        taxableAmount: 5.99,
+        taxes: shippingTaxes
+      }
+    ],
+    taxSummary: taxSummaryWithTaxedShipping
+  }));
+
+  const { billingAddress, cartId, currencyCode } = orderInput;
+
+  const commonOrder = await xformOrderGroupToCommonOrder({
+    billingAddress,
+    cartId,
+    collections: mockContext.collections,
+    currencyCode,
+    group: groupWithShipmentMethod
+  });
+
+  await setTaxesOnOrderFulfillmentGroup(mockContext, { group: groupWithShipmentMethod, commonOrder });
+
+  expect(groupWithShipmentMethod.items[0].tax).toBe(0.5);
+  expect(groupWithShipmentMethod.items[0].taxableAmount).toBe(10.99);
+  expect(groupWithShipmentMethod.items[0].taxes).toEqual(itemTaxes);
+  expect(groupWithShipmentMethod.shipmentMethod.tax).toBe(0.6);
+  expect(groupWithShipmentMethod.shipmentMethod.taxableAmount).toBe(5.99);
+  expect(groupWithShipmentMethod.shipmentMethod.taxes).toEqual(shippingTaxes);
+  expect(groupWithShipmentMethod.taxSummary).toEqual(taxSummaryWithTaxedShipping);
+});
+
 test("customFields are properly saved", async () => {
   mockContext.mutations.getFulfillmentGroupTaxes.mockReturnValueOnce(Promise.resolve({
     itemTaxes: [
