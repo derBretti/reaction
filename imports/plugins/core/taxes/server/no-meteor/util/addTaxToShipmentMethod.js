@@ -1,6 +1,6 @@
 /**
  * @summary Sets tax, taxable amount and taxes to shipment mehthod. Mutates `shipmentMethod`.
- * @param {Object[]]} itemTaxes Tax reasults
+ * @param {Object[]} itemTaxes Tax results
  * @param {Object} shipmentMethod The item
  * @returns {undefined}
  */
